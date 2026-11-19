@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Foreground for the adaptive launcher icon.
-    Shows a simple white calculator silhouette with gold accent bars,
-    matching the app's green‑white‑gold theme.
+    Simple white calculator silhouette matching the app's green‑white theme.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,7 +9,7 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Calculator body: white rounded square (squircle approximation) -->
+    <!-- Calculator body: white rounded square -->
     <path
         android:fillColor="#FFFFFFFF"
         android:pathData="M24,24
@@ -24,15 +23,22 @@
             a12,12 0 0 1 12,-12
             z" />
 
-    <!-- Gold display bar at the top of the calculator -->
+    <!-- Display area (lightly transparent) -->
     <path
-        android:fillColor="#FFD9B45C"
+        android:fillColor="#80FFFFFF"
         android:pathData="M30,30 h48 v8 h-48 z" />
 
-    <!-- Gold accent circle at the bottom‑right corner (e.g., power button) -->
+    <!-- Button circles -->
     <path
-        android:fillColor="#FFD9B45C"
-        android:pathData="M84,84
-            a6,6 0 0 1 -12,0
-            a6,6 0 0 1 12,0" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="
+            M38,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M54,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M70,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M38,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M54,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M70,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M38,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M54,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
+            M70,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8" />
 </vector>
