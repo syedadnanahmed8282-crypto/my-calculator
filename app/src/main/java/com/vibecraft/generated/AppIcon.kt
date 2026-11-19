@@ -39,13 +39,15 @@ fun AppIcon(
 }
 
 private fun DrawScope.drawAppIcon(cornerFraction: Float) {
-    val tileW = size.width
-    val tileH = size.height
+    // Use the full canvas size; the icon scales to any width/height.
+    val canvasW = size.width
+    val canvasH = size.height
     val s = size.minDimension
-    if (s <= 0f || tileW <= 0f || tileH <= 0f) return
+    if (s <= 0f) return
 
-    val originX = (tileW - s) / 2f
-    val originY = (tileH - s) / 2f
+    // Center a square drawing area within the possibly rectangular canvas.
+    val originX = (canvasW - s) / 2f
+    val originY = (canvasH - s) / 2f
 
     val forestTop = Color(0xFF1F6B4C)
     val forestBottom = Color(0xFF0B3125)
