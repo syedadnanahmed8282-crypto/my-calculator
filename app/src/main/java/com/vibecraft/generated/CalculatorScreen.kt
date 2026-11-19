@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +42,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 private val ScreenPadding = 16.dp
 private val KeyGap = 10.dp
 private val KeyCorner = 22.dp
+private const val KeypadRows = 5
+private val MinKeyHeight = 44.dp
 
 /**
  * Main calculator surface: display on top, keypad below.
@@ -176,118 +181,133 @@ private fun displayFontSize(length: Int): TextUnit = when {
 /* Keypad                                                                */
 /* --------------------------------------------------------------------- */
 
+/**
+ * The keypad measures the space it was given and hands every row an exact
+ * height, so keys are sized with plain dp values instead of scope-limited
+ * weight modifiers.
+ */
 @Composable
 private fun Keypad(
     state: CalculatorUiState,
     viewModel: CalculatorViewModel,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(KeyGap)
-    ) {
-        KeyRow {
-            CalcKey(
-                label = "C",
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = KeySurfaceAlt,
-                content = ForestGreenDeep,
-                onClick = { viewModel.onClear() }
-            )
-            CalcKey(
-                label = "±",
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = KeySurfaceAlt,
-                content = ForestGreenDeep,
-                fontSize = 24.sp,
-                onClick = { viewModel.onToggleSign() }
-            )
-            CalcKey(
-                label = "%",
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = KeySurfaceAlt,
-                content = ForestGreenDeep,
-                fontSize = 22.sp,
-                onClick = { viewModel.onPercent() }
-            )
-            CalcKey(
-                label = OP_DIVIDE.toString(),
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = ForestGreenSoft,
-                content = ForestGreen,
-                fontSize = 30.sp,
-                onClick = { viewModel.onOperator(OP_DIVIDE) }
-            )
-        }
+    BoxWithConstraints(modifier = modifier) {
+        val rowHeight = ((maxHeight - KeyGap * (KeypadRows - 1)) / KeypadRows)
+            .coerceAtLeast(MinKeyHeight)
 
-        KeyRow {
-            DigitKey("7", viewModel)
-            DigitKey("8", viewModel)
-            DigitKey("9", viewModel)
-            CalcKey(
-                label = OP_TIMES.toString(),
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = ForestGreenSoft,
-                content = ForestGreen,
-                fontSize = 30.sp,
-                onClick = { viewModel.onOperator(OP_TIMES) }
-            )
-        }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(KeyGap)
+        ) {
+            KeyRow(rowHeight) {
+                CalcKey(
+                    label = "C",
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = KeySurfaceAlt,
+                    content = ForestGreenDeep,
+                    onClick = { viewModel.onClear() }
+                )
+                CalcKey(
+                    label = "±",
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = KeySurfaceAlt,
+                    content = ForestGreenDeep,
+                    fontSize = 24.sp,
+                    onClick = { viewModel.onToggleSign() }
+                )
+                CalcKey(
+                    label = "%",
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = KeySurfaceAlt,
+                    content = ForestGreenDeep,
+                    fontSize = 22.sp,
+                    onClick = { viewModel.onPercent() }
+                )
+                CalcKey(
+                    label = OP_DIVIDE.toString(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = ForestGreenSoft,
+                    content = ForestGreen,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onOperator(OP_DIVIDE) }
+                )
+            }
 
-        KeyRow {
-            DigitKey("4", viewModel)
-            DigitKey("5", viewModel)
-            DigitKey("6", viewModel)
-            CalcKey(
-                label = OP_MINUS.toString(),
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = ForestGreenSoft,
-                content = ForestGreen,
-                fontSize = 30.sp,
-                onClick = { viewModel.onOperator(OP_MINUS) }
-            )
-        }
+            KeyRow(rowHeight) {
+                DigitKey("7", viewModel)
+                DigitKey("8", viewModel)
+                DigitKey("9", viewModel)
+                CalcKey(
+                    label = OP_TIMES.toString(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = ForestGreenSoft,
+                    content = ForestGreen,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onOperator(OP_TIMES) }
+                )
+            }
 
-        KeyRow {
-            DigitKey("1", viewModel)
-            DigitKey("2", viewModel)
-            DigitKey("3", viewModel)
-            CalcKey(
-                label = OP_PLUS.toString(),
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = ForestGreenSoft,
-                content = ForestGreen,
-                fontSize = 30.sp,
-                onClick = { viewModel.onOperator(OP_PLUS) }
-            )
-        }
+            KeyRow(rowHeight) {
+                DigitKey("4", viewModel)
+                DigitKey("5", viewModel)
+                DigitKey("6", viewModel)
+                CalcKey(
+                    label = OP_MINUS.toString(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = ForestGreenSoft,
+                    content = ForestGreen,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onOperator(OP_MINUS) }
+                )
+            }
 
-        KeyRow {
-            DigitKey("0", viewModel, weight = 2f)
-            CalcKey(
-                label = DECIMAL.toString(),
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = KeySurface,
-                content = DisplayText,
-                fontSize = 30.sp,
-                onClick = { viewModel.onDecimal() }
-            )
-            CalcKey(
-                label = "=",
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                container = if (state.showingResult) ForestGreenDeep else ForestGreen,
-                content = Color.White,
-                fontSize = 30.sp,
-                onClick = { viewModel.onEquals() }
-            )
+            KeyRow(rowHeight) {
+                DigitKey("1", viewModel)
+                DigitKey("2", viewModel)
+                DigitKey("3", viewModel)
+                CalcKey(
+                    label = OP_PLUS.toString(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = ForestGreenSoft,
+                    content = ForestGreen,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onOperator(OP_PLUS) }
+                )
+            }
+
+            KeyRow(rowHeight) {
+                DigitKey("0", viewModel, weight = 2f)
+                CalcKey(
+                    label = DECIMAL.toString(),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = KeySurface,
+                    content = DisplayText,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onDecimal() }
+                )
+                CalcKey(
+                    label = "=",
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    container = if (state.showingResult) ForestGreenDeep else ForestGreen,
+                    content = Color.White,
+                    fontSize = 30.sp,
+                    onClick = { viewModel.onEquals() }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun KeyRow(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
+private fun KeyRow(
+    rowHeight: Dp,
+    content: @Composable RowScope.() -> Unit
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().weight(1f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(rowHeight),
         horizontalArrangement = Arrangement.spacedBy(KeyGap),
         verticalAlignment = Alignment.CenterVertically,
         content = content
@@ -295,7 +315,7 @@ private fun KeyRow(content: @Composable androidx.compose.foundation.layout.RowSc
 }
 
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.DigitKey(
+private fun RowScope.DigitKey(
     digit: String,
     viewModel: CalculatorViewModel,
     weight: Float = 1f
