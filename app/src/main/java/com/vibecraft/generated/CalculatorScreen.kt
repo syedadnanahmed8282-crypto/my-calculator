@@ -99,7 +99,7 @@ private fun Header() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Calculator",
+            text = "Hisab",
             style = MaterialTheme.typography.titleMedium,
             color = ForestGreen,
             fontWeight = FontWeight.SemiBold
