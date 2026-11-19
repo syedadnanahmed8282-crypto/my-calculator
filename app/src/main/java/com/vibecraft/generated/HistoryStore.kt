@@ -6,46 +6,60 @@ import android.content.Context
  * One saved calculation: what was entered, what came out, and when.
  */
 data class HistoryEntry(
-    val expression: String,
-    val result: String,
+    val expression: String = "",
+    val result: String = "",
     val timestamp: Long = 0L
 )
 
 /**
  * Lightweight local storage for Hisab.
  *
- * Keeps the calculation history and the light / dark theme choice on the
- * device so that both survive closing the app. Uses SharedPreferences from
- * the Android platform, so no extra dependency is needed.
+ * Keeps the calculation history, the calculator memory and the light / dark
+ * theme choice on the device so that all of them survive closing the app.
+ * Only Android platform APIs are used, so no extra dependency is needed.
  */
 class HistoryStore(context: Context) {
 
     private val prefs = context.applicationContext
         .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    /* ---------------------------- history ---------------------------- */
+
     /** Reads the saved history, newest entry first. */
     fun loadHistory(): List<HistoryEntry> {
-        val raw = prefs.getString(KEY_HISTORY, null) ?: return emptyList()
-        return decode(raw).take(MAX_ENTRIES)
+        val raw = prefs.getString(KEY_HISTORY, null)
+        if (raw == null || raw.isEmpty()) return emptyList()
+        val decoded = decode(raw)
+        return if (decoded.size > MAX_ENTRIES) decoded.subList(0, MAX_ENTRIES) else decoded
     }
 
     /** Writes the whole history list back to disk (newest first). */
     fun saveHistory(entries: List<HistoryEntry>) {
-        val trimmed = entries.take(MAX_ENTRIES)
+        val trimmed = if (entries.size > MAX_ENTRIES) entries.subList(0, MAX_ENTRIES) else entries
         prefs.edit().putString(KEY_HISTORY, encode(trimmed)).apply()
     }
 
     /** Adds a new entry on top and keeps at most [MAX_ENTRIES] items. */
     fun addEntry(entry: HistoryEntry): List<HistoryEntry> {
-        val updated = (listOf(entry) + loadHistory()).take(MAX_ENTRIES)
-        saveHistory(updated)
-        return updated
+        val current = loadHistory()
+        val updated = ArrayList<HistoryEntry>(current.size + 1)
+        updated.add(entry)
+        updated.addAll(current)
+        val trimmed = if (updated.size > MAX_ENTRIES) {
+            ArrayList(updated.subList(0, MAX_ENTRIES))
+        } else {
+            updated
+        }
+        saveHistory(trimmed)
+        return trimmed
     }
 
     /** Removes every saved calculation. */
     fun clearHistory() {
         prefs.edit().remove(KEY_HISTORY).apply()
     }
+
+    /* ----------------------------- theme ----------------------------- */
 
     /** True when the user picked the dark theme. */
     fun loadDarkMode(): Boolean = prefs.getBoolean(KEY_DARK_MODE, false)
@@ -55,13 +69,22 @@ class HistoryStore(context: Context) {
         prefs.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
     }
 
+    /* ---------------------------- memory ----------------------------- */
+
     /** Reads the value kept in calculator memory (0.0 when it is empty). */
-    fun loadMemory(): Double =
-        prefs.getString(KEY_MEMORY, null)?.toDoubleOrNull() ?: 0.0
+    fun loadMemory(): Double {
+        val raw = prefs.getString(KEY_MEMORY, null) ?: return 0.0
+        val value = raw.toDoubleOrNull() ?: return 0.0
+        return if (value.isNaN() || value.isInfinite()) 0.0 else value
+    }
 
     /** Stores the value kept in calculator memory. */
     fun saveMemory(value: Double) {
-        prefs.edit().putString(KEY_MEMORY, value.toString()).apply()
+        if (value.isNaN() || value.isInfinite()) {
+            clearMemory()
+        } else {
+            prefs.edit().putString(KEY_MEMORY, value.toString()).apply()
+        }
     }
 
     /** Clears the calculator memory. */
@@ -69,39 +92,57 @@ class HistoryStore(context: Context) {
         prefs.edit().remove(KEY_MEMORY).apply()
     }
 
-    // --- simple, separator based encoding ---------------------------------
+    /* --------------- simple, separator based encoding ---------------- */
 
-    private fun encode(entries: List<HistoryEntry>): String =
-        entries.joinToString(ENTRY_SEP) { entry ->
-            listOf(
-                sanitize(entry.expression),
-                sanitize(entry.result),
-                entry.timestamp.toString()
-            ).joinToString(FIELD_SEP)
+    private fun encode(entries: List<HistoryEntry>): String {
+        val builder = StringBuilder()
+        for (index in entries.indices) {
+            if (index > 0) builder.append(ENTRY_SEP)
+            val entry = entries[index]
+            builder.append(sanitize(entry.expression))
+            builder.append(FIELD_SEP)
+            builder.append(sanitize(entry.result))
+            builder.append(FIELD_SEP)
+            builder.append(entry.timestamp.toString())
         }
+        return builder.toString()
+    }
 
     private fun decode(raw: String): List<HistoryEntry> {
         if (raw.isEmpty()) return emptyList()
-        return raw.split(ENTRY_SEP).mapNotNull { chunk ->
-            if (chunk.isEmpty()) return@mapNotNull null
+        val chunks = raw.split(ENTRY_SEP)
+        val result = ArrayList<HistoryEntry>(chunks.size)
+        for (chunk in chunks) {
+            if (chunk.isEmpty()) continue
             val parts = chunk.split(FIELD_SEP)
-            if (parts.size < 2) return@mapNotNull null
+            if (parts.size < 2) continue
             val expression = parts[0]
-            val result = parts[1]
-            if (expression.isEmpty() && result.isEmpty()) return@mapNotNull null
-            HistoryEntry(
-                expression = expression,
-                result = result,
-                timestamp = parts.getOrNull(2)?.toLongOrNull() ?: 0L
+            val value = parts[1]
+            if (expression.isEmpty() && value.isEmpty()) continue
+            val stamp = if (parts.size > 2) parts[2].toLongOrNull() ?: 0L else 0L
+            result.add(
+                HistoryEntry(
+                    expression = expression,
+                    result = value,
+                    timestamp = stamp
+                )
             )
         }
+        return result
     }
 
-    private fun sanitize(text: String): String =
-        text.replace(ENTRY_SEP, "")
-            .replace(FIELD_SEP, "")
-            .replace("\n", " ")
-            .replace("\r", " ")
+    private fun sanitize(text: String): String {
+        if (text.isEmpty()) return ""
+        val builder = StringBuilder(text.length)
+        for (character in text) {
+            when (character) {
+                '\u001F', '\u001E' -> Unit
+                '\n', '\r', '\t' -> builder.append(' ')
+                else -> builder.append(character)
+            }
+        }
+        return builder.toString()
+    }
 
     companion object {
         private const val PREFS_NAME = "hisab_prefs"

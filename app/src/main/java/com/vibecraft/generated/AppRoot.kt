@@ -5,6 +5,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -12,31 +14,34 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 /**
  * Entry point of the whole app.
  *
- * Wraps everything in the premium white-and-forest-green Material 3 theme,
- * paints a quiet base surface so the soft gradient in the screen can layer on
- * top of it, and hoists the [CalculatorViewModel] here so it survives
- * configuration changes and recompositions.
+ * Hoists the [CalculatorViewModel] here so it survives configuration changes
+ * and recompositions, restores the saved history / memory / theme choice from
+ * on-device storage, and then wraps the calculator screen in the premium
+ * white-and-forest-green Material 3 theme.
  *
- * The view model is connected to on-device storage once, which is what makes
- * the history, the memory value and the light / dark theme choice persist
- * between launches.
+ * The dark flag comes straight from the view model state, so switching the
+ * theme in the header immediately re-themes the whole app.
  */
 @Composable
 fun AppRoot() {
-    CalculatorTheme {
+    val context = LocalContext.current
+    val calculatorViewModel: CalculatorViewModel = viewModel()
+
+    // Current state drives the theme (light / dark forest).
+    val state by calculatorViewModel.uiState.collectAsState()
+
+    // Restore history, memory and theme choice from disk exactly once.
+    LaunchedEffect(calculatorViewModel) {
+        calculatorViewModel.attach(context)
+    }
+
+    // First (and only) positional argument is the dark-theme flag.
+    CalculatorTheme(state.isDark) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.onBackground
         ) {
-            val context = LocalContext.current
-            val calculatorViewModel: CalculatorViewModel = viewModel()
-
-            // Restore history, memory and theme choice from disk (idempotent).
-            LaunchedEffect(calculatorViewModel) {
-                calculatorViewModel.attach(context)
-            }
-
             CalculatorScreen(viewModel = calculatorViewModel)
         }
     }

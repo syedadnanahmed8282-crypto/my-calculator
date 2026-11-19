@@ -5,6 +5,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -25,15 +26,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -71,7 +65,7 @@ import java.util.Locale
 /* --------------------------------------------------------------------- */
 
 private val ScreenPadding = 16.dp
-private val PadGap = 10.dp
+private val PadGap = 9.dp
 private val SciGap = 6.dp
 private val KeyCorner = 22.dp
 private val MinKeyHeight = 44.dp
@@ -132,7 +126,7 @@ fun CalculatorScreen(
     LaunchedEffect(Unit) { viewModel.attach(context) }
 
     val tick: () -> Unit = {
-        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     Surface(
@@ -148,7 +142,7 @@ fun CalculatorScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(horizontal = ScreenPadding, vertical = ScreenPadding)
+                    .padding(horizontal = ScreenPadding, vertical = 12.dp)
             ) {
                 Header(
                     dark = dark,
@@ -180,7 +174,7 @@ fun CalculatorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .padding(top = 10.dp)
+                        .padding(top = 8.dp)
                 )
 
                 MemoryStrip(
@@ -205,7 +199,7 @@ fun CalculatorScreen(
                 )
 
                 if (state.scientific) {
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(7.dp))
                     ScientificPanel(
                         state = state,
                         viewModel = viewModel,
@@ -221,12 +215,12 @@ fun CalculatorScreen(
                     viewModel = viewModel,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(if (state.scientific) 1.3f else 1.6f)
+                        .weight(if (state.scientific) 1.35f else 1.75f)
                 )
             }
 
             if (historyOpen) {
-                HistoryPanel(
+                HistorySheet(
                     history = state.history,
                     dark = dark,
                     onDismiss = { historyOpen = false },
@@ -285,11 +279,11 @@ private fun Header(
         }
         Spacer(Modifier.width(7.dp))
         ToolChip(dark = dark, onClick = onOpenHistory) {
-            Icon(
-                imageVector = Icons.Filled.List,
-                contentDescription = "History",
-                tint = accent,
-                modifier = Modifier.size(17.dp)
+            Text(
+                text = "≡",
+                color = accent,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Medium
             )
         }
         Spacer(Modifier.width(7.dp))
@@ -297,7 +291,7 @@ private fun Header(
             ThemeGlyph(
                 dark = dark,
                 tint = accent,
-                bite = DarkKeySurface,
+                bite = if (dark) DarkKeySurface else KeyWhite,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -445,7 +439,7 @@ private fun ScientificPanel(
 ) {
     val haptics = LocalHapticFeedback.current
     val tick: () -> Unit = {
-        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     Column(
@@ -539,7 +533,7 @@ private fun NumericKeypad(
 ) {
     val haptics = LocalHapticFeedback.current
     val tick: () -> Unit = {
-        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     BoxWithConstraints(modifier = modifier) {
@@ -595,7 +589,9 @@ private fun NumericKeypad(
                 KeyButton(
                     label = DECIMAL.toString(),
                     onClick = { tick(); viewModel.onDecimal() },
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     container = digitFill(dark),
                     content = digitInk(dark),
                     borderColor = hairline(dark),
@@ -605,10 +601,12 @@ private fun NumericKeypad(
                 KeyButton(
                     label = "=",
                     onClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        tick()
                         viewModel.onEquals()
                     },
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     brush = AccentGradient,
                     content = Color.White,
                     borderColor = Color.Transparent,
@@ -646,7 +644,9 @@ private fun RowScope.DigitButton(
     KeyButton(
         label = digit,
         onClick = onClick,
-        modifier = Modifier.weight(weight).fillMaxHeight(),
+        modifier = Modifier
+            .weight(weight)
+            .fillMaxHeight(),
         container = digitFill(dark),
         content = digitInk(dark),
         borderColor = hairline(dark),
@@ -665,7 +665,9 @@ private fun RowScope.FunctionButton(
     KeyButton(
         label = label,
         onClick = onClick,
-        modifier = Modifier.weight(1f).fillMaxHeight(),
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight(),
         container = functionFill(dark),
         content = functionInk(dark),
         borderColor = hairline(dark),
@@ -685,7 +687,9 @@ private fun RowScope.OperatorButton(
         KeyButton(
             label = label,
             onClick = onClick,
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
             container = ForestGreenSoftDark,
             content = ForestGreenGlow,
             borderColor = OperatorBorderDark,
@@ -697,7 +701,9 @@ private fun RowScope.OperatorButton(
         KeyButton(
             label = label,
             onClick = onClick,
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
             brush = OperatorSurface,
             content = ForestGreen,
             borderColor = OperatorBorder,
@@ -728,7 +734,7 @@ private fun KeyButton(
     val shape = RoundedCornerShape(KeyCorner)
     Box(
         modifier = modifier
-            .shadow(elevation, shape, clip = false)
+            .shadow(elevation, shape)
             .clip(shape)
             .then(
                 if (brush != null) Modifier.background(brush)
@@ -753,12 +759,11 @@ private fun KeyButton(
 }
 
 /* --------------------------------------------------------------------- */
-/* History sheet                                                         */
+/* History panel (custom overlay, no experimental APIs)                  */
 /* --------------------------------------------------------------------- */
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HistoryPanel(
+private fun HistorySheet(
     history: List<HistoryEntry>,
     dark: Boolean,
     onDismiss: () -> Unit,
@@ -767,18 +772,30 @@ private fun HistoryPanel(
 ) {
     val ink = if (dark) DarkDisplayText else DisplayText
     val mute = mutedInk(dark)
+    val panelColor = if (dark) DarkForestSurface else Color.White
+    val scrimInteraction = remember { MutableInteractionSource() }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = if (dark) DarkForestSurface else Color.White,
-        contentColor = ink,
-        scrimColor = Color.Black.copy(alpha = 0.32f)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Tapping the dimmed area closes the history.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.34f))
+                .clickable(
+                    interactionSource = scrimInteraction,
+                    indication = null,
+                    onClick = onDismiss
+                )
+        )
+
         Column(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp)
+                .clip(RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp))
+                .background(panelColor)
+                .padding(horizontal = 18.dp)
+                .padding(top = 16.dp, bottom = 22.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -787,46 +804,56 @@ private fun HistoryPanel(
                 Text(
                     text = "History",
                     color = ink,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.weight(1f))
                 if (history.isNotEmpty()) {
-                    TextButton(onClick = onClear) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            tint = mute,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(text = "Clear", color = mute, fontSize = 14.sp)
-                    }
+                    Text(
+                        text = "Clear",
+                        color = accentInk(dark),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable(onClick = onClear)
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    text = "✕",
+                    color = mute,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(onClick = onDismiss)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                )
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
 
             if (history.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(130.dp),
+                        .height(120.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "No calculations yet",
                         color = mute,
-                        fontSize = 15.sp
+                        fontSize = 14.sp
                     )
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 400.dp),
+                    modifier = Modifier.heightIn(max = 320.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(history) { entry ->
-                        HistoryRow(
+                        HistoryCard(
                             entry = entry,
                             dark = dark,
                             onClick = { onSelect(entry) }
@@ -839,13 +866,13 @@ private fun HistoryPanel(
 }
 
 @Composable
-private fun HistoryRow(
+private fun HistoryCard(
     entry: HistoryEntry,
     dark: Boolean,
     onClick: () -> Unit
 ) {
     val mute = mutedInk(dark)
-    val stamp = remember(entry.timestamp) { timeLabel(entry.timestamp) }
+    val stamp = remember(entry.timestamp) { historyStamp(entry.timestamp) }
 
     Column(
         modifier = Modifier
@@ -884,7 +911,7 @@ private fun HistoryRow(
 }
 
 /** Friendly stamp for a saved calculation, empty when there is no time. */
-private fun timeLabel(timestamp: Long): String {
+private fun historyStamp(timestamp: Long): String {
     if (timestamp <= 0L) return ""
     val format = SimpleDateFormat("d MMM · h:mm a", Locale.getDefault())
     return format.format(Date(timestamp))

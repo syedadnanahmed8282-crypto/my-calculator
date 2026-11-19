@@ -22,68 +22,68 @@ import androidx.compose.ui.unit.sp
 /* --------------------------------------------------------------------- */
 
 /** Primary forest green: deep, saturated and expensive looking. */
-val ForestGreen = Color(0xFF14532D)
+val ForestGreen: Color = Color(0xFF14532D)
 
 /** Even deeper green for the ends of gradients and pressed states. */
-val ForestGreenDeep = Color(0xFF0A2E18)
+val ForestGreenDeep: Color = Color(0xFF0A2E18)
 
 /** Rich mid green used as the bright stop of the accent gradient. */
-val ForestGreenRich = Color(0xFF1E6B3A)
+val ForestGreenRich: Color = Color(0xFF1E6B3A)
 
 /** Luminous green for small highlights and the sign accents. */
-val ForestGreenBright = Color(0xFF2E9E5B)
+val ForestGreenBright: Color = Color(0xFF2E9E5B)
 
 /** Very light green wash used for containers and highlighted keys. */
-val ForestGreenSoft = Color(0xFFE8F3EB)
+val ForestGreenSoft: Color = Color(0xFFE8F3EB)
 
 /** Neutral key background for digits. */
-val KeySurface = Color(0xFFF7FAF7)
+val KeySurface: Color = Color(0xFFF7FAF7)
 
 /** Slightly stronger neutral for the function column. */
-val KeySurfaceAlt = Color(0xFFEDF3EE)
+val KeySurfaceAlt: Color = Color(0xFFEDF3EE)
 
 /** Main display text colour. */
-val DisplayText = Color(0xFF0F1A13)
+val DisplayText: Color = Color(0xFF0F1A13)
 
 /** Muted grey green for the small preview line. */
-val MutedText = Color(0xFF6E7B71)
+val MutedText: Color = Color(0xFF6E7B71)
 
 /** Hairline border used for the subtle premium outlines. */
-val HairlineBorder = Color(0xFFE1EAE2)
+val HairlineBorder: Color = Color(0xFFE1EAE2)
 
 /** Error red kept harmonious with the green theme. */
-val ErrorRed = Color(0xFFB3261E)
+val ErrorRed: Color = Color(0xFFB3261E)
 
 /* --------------------------------------------------------------------- */
 /* Dark palette: night forest. Same green soul, much lower light.        */
 /* --------------------------------------------------------------------- */
 
 /** Deep night background with a green undertone. */
-val DarkForestBackground = Color(0xFF06120B)
+val DarkForestBackground: Color = Color(0xFF06120B)
 
 /** Card / panel surface for the dark theme. */
-val DarkForestSurface = Color(0xFF0C1A11)
+val DarkForestSurface: Color = Color(0xFF0C1A11)
 
 /** Elevated key surface for digits in the dark theme. */
-val DarkKeySurface = Color(0xFF14251A)
+val DarkKeySurface: Color = Color(0xFF14251A)
 
 /** Slightly stronger elevated surface for the function column. */
-val DarkKeySurfaceAlt = Color(0xFF1B2F21)
+val DarkKeySurfaceAlt: Color = Color(0xFF1B2F21)
 
 /** Main display text colour in the dark theme (soft mint white). */
-val DarkDisplayText = Color(0xFFEAF5EC)
+val DarkDisplayText: Color = Color(0xFFEAF5EC)
 
 /** Muted grey green for the small preview line in the dark theme. */
-val DarkMutedText = Color(0xFF94A89A)
+val DarkMutedText: Color = Color(0xFF94A89A)
 
 /** Hairline border for the dark theme. */
-val DarkHairlineBorder = Color(0xFF223528)
+val DarkHairlineBorder: Color = Color(0xFF223528)
 
 /** Bright mint green used as the primary accent on dark surfaces. */
-val ForestGreenGlow = Color(0xFF6FDD93)
+val ForestGreenGlow: Color = Color(0xFF6FDD93)
 
 /** Soft mint wash used for highlighted containers in the dark theme. */
-val ForestGreenSoftDark = Color(0xFF16301F)
+val ForestGreenSoftDark: Color = Color(0xFF16301F)
 
 /* --------------------------------------------------------------------- */
 /* Gradients: soft page wash plus the accent gradient for key surfaces.  */
@@ -321,20 +321,16 @@ private val CalculatorShapes = Shapes(
 )
 
 /** Round-square shape used by the keypad keys. */
-val KeyShape = RoundedCornerShape(22.dp)
+val KeyShape: RoundedCornerShape = RoundedCornerShape(22.dp)
 
 /** Softer, wider shape for the wide zero / equals keys. */
-val WideKeyShape = RoundedCornerShape(26.dp)
+val WideKeyShape: RoundedCornerShape = RoundedCornerShape(26.dp)
 
 /** Shape of the frosted display panel. */
-val DisplayShape = RoundedCornerShape(32.dp)
+val DisplayShape: RoundedCornerShape = RoundedCornerShape(32.dp)
 
 /* --------------------------------------------------------------------- */
 /* Theme aware accessors.                                                */
-/*                                                                       */
-/* The screen can either read MaterialTheme.colorScheme directly, or use */
-/* these helpers when it wants the exact Hisab gradients for the current */
-/* light / dark mode. They are cheap and safe to call from composables.  */
 /* --------------------------------------------------------------------- */
 
 /** True while the dark theme is active, available anywhere in the tree. */

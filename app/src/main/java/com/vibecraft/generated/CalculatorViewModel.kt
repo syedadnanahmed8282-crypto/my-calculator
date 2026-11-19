@@ -15,27 +15,29 @@ import kotlin.math.log10
 import kotlin.math.round
 import kotlin.math.sin
 import kotlin.math.sqrt
-import kotlin.math.tan
 
 /* --------------------------------------------------------------------- */
 /* Expression glyphs. The expression string is also what the display     */
 /* shows, so it uses typographic operators instead of ASCII ones.        */
 /* --------------------------------------------------------------------- */
 
-internal const val OP_PLUS = '+'
-internal const val OP_MINUS = '−'
-internal const val OP_TIMES = '×'
-internal const val OP_DIVIDE = '÷'
-internal const val OP_PERCENT = '%'
-internal const val DECIMAL = '.'
+internal const val OP_PLUS: Char = '+'
+internal const val OP_MINUS: Char = '−'
+internal const val OP_TIMES: Char = '×'
+internal const val OP_DIVIDE: Char = '÷'
+internal const val OP_PERCENT: Char = '%'
+internal const val DECIMAL: Char = '.'
 
-internal fun isBinaryOperator(symbol: Char): Boolean =
-    symbol == OP_PLUS || symbol == OP_MINUS || symbol == OP_TIMES || symbol == OP_DIVIDE
+internal fun isBinaryOperator(symbol: Char): Boolean {
+    return symbol == OP_PLUS || symbol == OP_MINUS ||
+        symbol == OP_TIMES || symbol == OP_DIVIDE
+}
 
-private const val MAX_INPUT_DIGITS = 15
-private const val MAX_HISTORY = 100
-private const val MINUS_TEXT = "−"
-private const val ERROR_TEXT = "Error"
+private const val MAX_INPUT_DIGITS: Int = 15
+private const val MAX_HISTORY: Int = 100
+private const val MINUS_TEXT: String = "−"
+private const val ERROR_TEXT: String = "Error"
+private const val EULER_VALUE: Double = 2.718281828459045
 
 /**
  * Everything the calculator screen needs to draw itself.
@@ -67,6 +69,7 @@ data class CalculatorUiState(
     /** Small line above the big one. */
     val secondaryText: String get() = if (hasError) ERROR_TEXT else preview
 
+    /** True when the small line has something to say. */
     val hasSecondary: Boolean get() = secondaryText.isNotEmpty()
 
     /** True when something is stored in memory. */
@@ -82,6 +85,10 @@ data class CalculatorUiState(
         else -> primaryText
     }
 }
+
+/* --------------------------------------------------------------------- */
+/* View model                                                            */
+/* --------------------------------------------------------------------- */
 
 class CalculatorViewModel : ViewModel() {
 
@@ -115,17 +122,18 @@ class CalculatorViewModel : ViewModel() {
     /* ----------------------------- input ------------------------------ */
 
     fun onDigit(digit: Char) {
+        if (!digit.isDigit()) return
         val current = _uiState.value
         val base = if (current.showingResult || current.hasError) "" else current.expression
         val start = trailingNumberStart(base)
         val trailing = base.substring(start)
 
-        val next = when {
+        val next: String = when {
             trailing == "0" -> base.substring(0, start) + digit
             trailing.count { it.isDigit() } >= MAX_INPUT_DIGITS -> base
             else -> base + digit
         }
-        apply(next)
+        applyExpression(next)
     }
 
     fun onDecimal() {
@@ -134,34 +142,38 @@ class CalculatorViewModel : ViewModel() {
         val start = trailingNumberStart(base)
         val trailing = base.substring(start)
 
-        val next = when {
-            trailing.isEmpty() -> base + "0."
-            trailing.contains(DECIMAL) -> base
+        val next: String = when {
+            trailing.isEmpty() -> base + "0" + DECIMAL
+            trailing.indexOf(DECIMAL) >= 0 -> base
             else -> base + DECIMAL
         }
-        apply(next)
+        applyExpression(next)
     }
 
     fun onOperator(symbol: Char) {
+        if (!isBinaryOperator(symbol)) return
         val current = _uiState.value
         val base = if (current.hasError) "" else current.expression
 
-        val next = when {
-            base.isEmpty() || base == MINUS_TEXT -> if (symbol == OP_MINUS) MINUS_TEXT else ""
-            isBinaryOperator(base.last()) -> base.dropLast(1) + symbol
-            base.last() == DECIMAL -> base.dropLast(1) + symbol
+        val next: String = when {
+            base.isEmpty() || base == MINUS_TEXT ->
+                if (symbol == OP_MINUS) MINUS_TEXT else ""
+            isBinaryOperator(base[base.length - 1]) ->
+                base.substring(0, base.length - 1) + symbol
+            base[base.length - 1] == DECIMAL ->
+                base.substring(0, base.length - 1) + symbol
             else -> base + symbol
         }
-        apply(next)
+        applyExpression(next)
     }
 
     fun onPercent() {
         val current = _uiState.value
         val base = if (current.hasError) "" else current.expression
         if (base.isEmpty()) return
-        val last = base.last()
+        val last = base[base.length - 1]
         if (!(last.isDigit() || last == OP_PERCENT)) return
-        apply(base + OP_PERCENT)
+        applyExpression(base + OP_PERCENT)
     }
 
     fun onToggleSign() {
@@ -171,19 +183,19 @@ class CalculatorViewModel : ViewModel() {
         if (expression.isEmpty()) return
 
         val numberStart = trailingNumberStart(expression)
-        if (numberStart == expression.length) return // nothing to flip (trailing operator or %)
+        if (numberStart == expression.length) return // nothing to flip
 
         val minusIndex = numberStart - 1
         val alreadyNegated = minusIndex >= 0 &&
             expression[minusIndex] == OP_MINUS &&
             (minusIndex == 0 || isBinaryOperator(expression[minusIndex - 1]))
 
-        val next = if (alreadyNegated) {
+        val next: String = if (alreadyNegated) {
             expression.substring(0, minusIndex) + expression.substring(numberStart)
         } else {
             expression.substring(0, numberStart) + OP_MINUS + expression.substring(numberStart)
         }
-        apply(next, showingResult = current.showingResult)
+        applyExpression(next, current.showingResult)
     }
 
     fun onBackspace() {
@@ -192,7 +204,7 @@ class CalculatorViewModel : ViewModel() {
             onClear()
             return
         }
-        apply(current.expression.dropLast(1))
+        applyExpression(current.expression.substring(0, current.expression.length - 1))
     }
 
     fun onClear() {
@@ -212,8 +224,8 @@ class CalculatorViewModel : ViewModel() {
         }
 
         var expression = current.expression
-        while (expression.isNotEmpty() && isBinaryOperator(expression.last())) {
-            expression = expression.dropLast(1)
+        while (expression.isNotEmpty() && isBinaryOperator(expression[expression.length - 1])) {
+            expression = expression.substring(0, expression.length - 1)
         }
         if (expression.isEmpty()) return
 
@@ -229,7 +241,7 @@ class CalculatorViewModel : ViewModel() {
         }
 
         val result = formatNumber(value)
-        val history = if (result == expression) {
+        val history: List<HistoryEntry> = if (result == expression) {
             current.history
         } else {
             saveEntry(
@@ -293,9 +305,23 @@ class CalculatorViewModel : ViewModel() {
     fun onFunction(name: String) {
         val current = _uiState.value
         val base = if (current.hasError) "" else current.expression
-        val input = if (base.isEmpty()) 0.0 else (ExpressionEvaluator.evaluate(base) ?: return)
+        val input: Double = if (base.isEmpty()) 0.0 else (ExpressionEvaluator.evaluate(base) ?: return)
 
-        val result: Double? = when (name.lowercase(Locale.US)) {
+        val key = name.lowercase(Locale.US)
+
+        if (key == "neg") {
+            val negated = -input
+            if (!negated.isFinite()) return
+            _uiState.value = current.copy(
+                expression = formatNumber(cleanValue(negated)),
+                preview = "",
+                hasError = false,
+                showingResult = true
+            )
+            return
+        }
+
+        val result: Double? = when (key) {
             "sin" -> sin(angleToRadians(input))
             "cos" -> cos(angleToRadians(input))
             "tan" -> {
@@ -305,12 +331,11 @@ class CalculatorViewModel : ViewModel() {
             "ln" -> if (input > 0.0) ln(input) else null
             "log" -> if (input > 0.0) log10(input) else null
             "sqrt", "√" -> if (input >= 0.0) sqrt(input) else null
-            "sqr", "square", "x²" -> input * input
+            "sqr", "square", "x2" -> input * input
             "inv", "1/x" -> if (input != 0.0) 1.0 / input else null
-            "exp", "eˣ" -> exp(input)
+            "exp", "ex" -> exp(input)
             "fact", "n!" -> factorial(input)
-            "neg" -> -input
-            else -> return
+            else -> null
         }
 
         if (result == null || !result.isFinite()) {
@@ -343,9 +368,10 @@ class CalculatorViewModel : ViewModel() {
 
     /** Drops π or e into the expression as a number. */
     fun onConstant(symbol: String) {
-        when (symbol) {
-            "π", "pi", "PI" -> insertValue(PI)
-            "e", "E" -> insertValue(Math.E)
+        val key = symbol.lowercase(Locale.US)
+        when (key) {
+            "π", "pi" -> insertValue(PI)
+            "e" -> insertValue(EULER_VALUE)
         }
     }
 
@@ -390,7 +416,7 @@ class CalculatorViewModel : ViewModel() {
     /** The text the screen should copy to the clipboard. */
     fun copyText(): String = _uiState.value.copyText
 
-    private fun apply(expression: String, showingResult: Boolean = false) {
+    private fun applyExpression(expression: String, showingResult: Boolean = false) {
         _uiState.value = _uiState.value.copy(
             expression = expression,
             preview = previewFor(expression),
@@ -402,7 +428,10 @@ class CalculatorViewModel : ViewModel() {
     private fun saveEntry(entry: HistoryEntry): List<HistoryEntry> {
         val saved = store
         if (saved != null) return saved.addEntry(entry)
-        return (listOf(entry) + _uiState.value.history).take(MAX_HISTORY)
+        val combined = ArrayList<HistoryEntry>(_uiState.value.history.size + 1)
+        combined.add(entry)
+        combined.addAll(_uiState.value.history)
+        return if (combined.size > MAX_HISTORY) combined.subList(0, MAX_HISTORY) else combined
     }
 
     private fun setMemory(value: Double) {
@@ -424,11 +453,11 @@ class CalculatorViewModel : ViewModel() {
         val base = if (current.showingResult || current.hasError) "" else current.expression
         val start = trailingNumberStart(base)
         val next = base.substring(0, start) + formatNumber(value)
-        apply(next)
+        applyExpression(next)
     }
 
     private fun angleToRadians(value: Double): Double =
-        if (_uiState.value.degrees) Math.toRadians(value) else value
+        if (_uiState.value.degrees) value * PI / 180.0 else value
 
     private fun factorial(value: Double): Double? {
         if (value < 0.0 || value > 170.0) return null
@@ -452,20 +481,36 @@ class CalculatorViewModel : ViewModel() {
 
     private fun trailingNumberStart(expression: String): Int {
         var index = expression.length
-        while (index > 0 && (expression[index - 1].isDigit() || expression[index - 1] == DECIMAL)) {
-            index--
+        while (index > 0) {
+            val char = expression[index - 1]
+            if (char.isDigit() || char == DECIMAL) {
+                index--
+            } else {
+                break
+            }
         }
         return index
     }
 
     private fun previewFor(expression: String): String {
         if (expression.isEmpty()) return ""
-        val last = expression.last()
+        val last = expression[expression.length - 1]
         if (isBinaryOperator(last) || last == DECIMAL) return ""
 
-        val hasOperation = expression.any {
-            it == OP_PLUS || it == OP_TIMES || it == OP_DIVIDE || it == OP_PERCENT
-        } || expression.drop(1).any { it == OP_MINUS }
+        var hasOperation = false
+        var index = 0
+        while (index < expression.length) {
+            val char = expression[index]
+            if (char == OP_PLUS || char == OP_TIMES || char == OP_DIVIDE || char == OP_PERCENT) {
+                hasOperation = true
+                break
+            }
+            if (char == OP_MINUS && index > 0 && isBinaryOperator(expression[index - 1])) {
+                hasOperation = true
+                break
+            }
+            index++
+        }
         if (!hasOperation) return ""
 
         val value = ExpressionEvaluator.evaluate(expression) ?: return ""
@@ -479,9 +524,9 @@ class CalculatorViewModel : ViewModel() {
 /* No scripting, no reflection, no libraries beyond the Kotlin stdlib.   */
 /* --------------------------------------------------------------------- */
 
-private sealed interface Token {
-    data class Number(val value: Double) : Token
-    data class Operator(val symbol: Char) : Token
+private sealed class Token {
+    class Number(val value: Double) : Token()
+    class Operator(val symbol: Char) : Token()
 }
 
 internal object ExpressionEvaluator {
@@ -500,50 +545,40 @@ internal object ExpressionEvaluator {
         var index = 0
         while (index < source.length) {
             val char = source[index]
-            when {
-                char.isDigit() || char == DECIMAL -> {
-                    val start = index
-                    var seenDot = false
-                    while (index < source.length &&
-                        (source[index].isDigit() || source[index] == DECIMAL)
-                    ) {
-                        if (source[index] == DECIMAL) {
-                            if (seenDot) return null
-                            seenDot = true
-                        }
+            if (char.isDigit() || char == DECIMAL) {
+                val start = index
+                var seenDot = false
+                while (index < source.length) {
+                    val inner = source[index]
+                    if (inner.isDigit()) {
                         index++
+                    } else if (inner == DECIMAL) {
+                        if (seenDot) return null
+                        seenDot = true
+                        index++
+                    } else {
+                        break
                     }
-                    val value = source.substring(start, index).toDoubleOrNull() ?: return null
-                    tokens.add(Token.Number(value))
                 }
-
-                isBinaryOperator(char) -> {
-                    tokens.add(Token.Operator(char))
-                    index++
-                }
-
-                char == OP_PERCENT -> {
-                    tokens.add(Token.Operator(OP_PERCENT))
-                    index++
-                }
-
-                // Accept ASCII fallbacks in case they ever reach us.
-                char == '-' -> {
-                    tokens.add(Token.Operator(OP_MINUS))
-                    index++
-                }
-
-                char == '*' -> {
-                    tokens.add(Token.Operator(OP_TIMES))
-                    index++
-                }
-
-                char == '/' -> {
-                    tokens.add(Token.Operator(OP_DIVIDE))
-                    index++
-                }
-
-                else -> return null
+                val number = source.substring(start, index).toDoubleOrNull() ?: return null
+                tokens.add(Token.Number(number))
+            } else if (isBinaryOperator(char)) {
+                tokens.add(Token.Operator(char))
+                index++
+            } else if (char == OP_PERCENT) {
+                tokens.add(Token.Operator(OP_PERCENT))
+                index++
+            } else if (char == '-') {
+                tokens.add(Token.Operator(OP_MINUS))
+                index++
+            } else if (char == '*') {
+                tokens.add(Token.Operator(OP_TIMES))
+                index++
+            } else if (char == '/') {
+                tokens.add(Token.Operator(OP_DIVIDE))
+                index++
+            } else {
+                return null
             }
         }
         return tokens
@@ -559,7 +594,9 @@ internal object ExpressionEvaluator {
             return if (position == tokens.size) value else null
         }
 
-        private fun peek(): Token? = tokens.getOrNull(position)
+        private fun peek(): Token? {
+            return if (position < tokens.size) tokens[position] else null
+        }
 
         /** expression := term (('+' | '−') term)* */
         private fun expression(): Double? {
@@ -631,23 +668,40 @@ internal fun formatNumber(value: Double): String {
     if (value == 0.0) return "0"
 
     val magnitude = abs(value)
-    val raw = if (magnitude >= 1e12 || magnitude < 1e-9) {
+    val raw: String = if (magnitude >= 1e12 || magnitude < 1e-9) {
         String.format(Locale.US, "%.8e", value)
     } else {
         String.format(Locale.US, "%.10f", value)
     }
-    return trimTrailingZeros(raw)
+    val trimmed = trimTrailingZeros(raw)
+    return if (trimmed == "-0") "0" else trimmed
 }
 
 private fun trimTrailingZeros(text: String): String {
-    val exponentIndex = text.indexOfFirst { it == 'e' || it == 'E' }
+    var exponentIndex = -1
+    var index = 0
+    while (index < text.length) {
+        val char = text[index]
+        if (char == 'e' || char == 'E') {
+            exponentIndex = index
+            break
+        }
+        index++
+    }
+
     val mantissa = if (exponentIndex >= 0) text.substring(0, exponentIndex) else text
     val exponent = if (exponentIndex >= 0) text.substring(exponentIndex) else ""
 
+    if (!mantissa.contains('.')) {
+        return mantissa + exponent
+    }
+
     var end = mantissa.length
-    if (mantissa.contains('.')) {
-        while (end > 0 && mantissa[end - 1] == '0') end--
-        if (end > 0 && mantissa[end - 1] == '.') end--
+    while (end > 0 && mantissa[end - 1] == '0') {
+        end--
+    }
+    if (end > 0 && mantissa[end - 1] == '.') {
+        end--
     }
     return mantissa.substring(0, end) + exponent
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -22,18 +24,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,7 +85,7 @@ fun CalculatorDisplay(
     val scroll = rememberScrollState()
 
     // Keep the newest typed characters visible when the expression grows.
-    LaunchedEffect(state.primaryText, scroll.maxValue) {
+    LaunchedEffect(state.primaryText) {
         scroll.animateScrollTo(scroll.maxValue)
     }
 
@@ -167,7 +164,7 @@ private fun MemoryBadge(text: String, dark: Boolean) {
             .padding(horizontal = 10.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("M", color = fg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(text = "M", color = fg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(6.dp))
         Text(
             text = text,
@@ -201,9 +198,9 @@ private fun AngleBadge(degrees: Boolean, dark: Boolean) {
 /* --------------------------------------------------------------------- */
 
 /**
- * Expandable row of scientific keys. [onFunction] receives the raw key name
- * ("sin", "cos", "log", "√", "x²", "1/x", "π", "e", "(", ")") so the view
- * model decides how to fold it into the expression.
+ * Expandable rows of scientific keys. [onFunction] receives the raw key name
+ * ("sin", "cos", "tan", "ln", "log", "√", "x2", "π", "e", "(", ")") so the
+ * view model decides how to fold it into the expression.
  */
 @Composable
 fun ScientificPanel(
@@ -213,52 +210,69 @@ fun ScientificPanel(
     onToggleDegrees: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val rows = listOf(
-        listOf(TAG_ANGLE, "sin", "cos", "tan"),
-        listOf("ln", "log", "√", "x²"),
-        listOf("π", "e", "(", ")")
-    )
-
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(SciGap)
     ) {
-        rows.forEach { row ->
-            Row(
+        SciRow {
+            SciChip(
+                label = if (degrees) "DEG" else "RAD",
+                highlighted = true,
+                isDark = isDark,
+                onClick = onToggleDegrees,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(38.dp),
-                horizontalArrangement = Arrangement.spacedBy(SciGap)
-            ) {
-                row.forEach { key ->
-                    if (key == TAG_ANGLE) {
-                        SciChip(
-                            label = if (degrees) "DEG" else "RAD",
-                            highlighted = true,
-                            isDark = isDark,
-                            onClick = onToggleDegrees,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .weight(1f)
-                        )
-                    } else {
-                        SciChip(
-                            label = key,
-                            highlighted = false,
-                            isDark = isDark,
-                            onClick = { onFunction(key) },
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .weight(1f)
-                        )
-                    }
-                }
-            }
+                    .fillMaxHeight()
+                    .weight(1f)
+            )
+            SciKey("sin", isDark, onFunction)
+            SciKey("cos", isDark, onFunction)
+            SciKey("tan", isDark, onFunction)
+        }
+
+        SciRow {
+            SciKey("ln", isDark, onFunction)
+            SciKey("log", isDark, onFunction)
+            SciKey("√", isDark, onFunction)
+            SciKey("x2", isDark, onFunction)
+        }
+
+        SciRow {
+            SciKey("π", isDark, onFunction)
+            SciKey("e", isDark, onFunction)
+            SciKey("(", isDark, onFunction)
+            SciKey(")", isDark, onFunction)
         }
     }
 }
 
-private const val TAG_ANGLE = "\u0001angle"
+@Composable
+private fun SciRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(38.dp),
+        horizontalArrangement = Arrangement.spacedBy(SciGap),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
+
+@Composable
+private fun RowScope.SciKey(
+    label: String,
+    isDark: Boolean,
+    onFunction: (String) -> Unit
+) {
+    SciChip(
+        label = label,
+        highlighted = false,
+        isDark = isDark,
+        onClick = { onFunction(label) },
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(1f)
+    )
+}
 
 @Composable
 private fun SciChip(
@@ -314,30 +328,26 @@ fun CalcKey(
     icon: ImageVector? = null
 ) {
     val container = when (style) {
-        CalcKeyStyle.Accent ->
-            modifier
-                .clip(KeyShape)
-                .background(AccentGradient)
+        CalcKeyStyle.Accent -> modifier
+            .clip(KeyShape)
+            .background(AccentGradient)
 
-        CalcKeyStyle.Operator ->
-            modifier
-                .clip(KeyShape)
-                .background(if (isDark) ForestGreenSoftDark else ForestGreenSoft)
+        CalcKeyStyle.Operator -> modifier
+            .clip(KeyShape)
+            .background(if (isDark) ForestGreenSoftDark else ForestGreenSoft)
 
-        CalcKeyStyle.Function ->
-            modifier
-                .clip(KeyShape)
-                .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
+        CalcKeyStyle.Function -> modifier
+            .clip(KeyShape)
+            .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
 
-        CalcKeyStyle.Digit ->
-            modifier
-                .clip(KeyShape)
-                .background(if (isDark) DarkKeySurface else KeySurface)
-                .border(
-                    width = 1.dp,
-                    color = if (isDark) DarkHairlineBorder else HairlineBorder,
-                    shape = KeyShape
-                )
+        CalcKeyStyle.Digit -> modifier
+            .clip(KeyShape)
+            .background(if (isDark) DarkKeySurface else KeySurface)
+            .border(
+                width = 1.dp,
+                color = if (isDark) DarkHairlineBorder else HairlineBorder,
+                shape = KeyShape
+            )
     }
 
     val textColor = when (style) {
@@ -352,10 +362,10 @@ fun CalcKey(
         contentAlignment = Alignment.Center
     ) {
         if (icon != null) {
-            Icon(
+            androidx.compose.foundation.Image(
                 imageVector = icon,
                 contentDescription = label,
-                tint = textColor,
+                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(textColor),
                 modifier = Modifier.size(22.dp)
             )
         } else {
@@ -416,12 +426,12 @@ fun CalculatorKeypad(
                 fontSize = 18.sp
             )
             CalcKey(
-                label = "Backspace",
+                label = "⌫",
                 onClick = onBackspace,
                 modifier = Modifier.fillMaxHeight().weight(1f),
                 style = CalcKeyStyle.Function,
                 isDark = dark,
-                icon = Icons.Filled.Clear
+                fontSize = 18.sp
             )
             CalcKey(
                 label = "%",
@@ -581,10 +591,34 @@ fun MemoryBar(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(SciGap)
     ) {
-        MemoryChip("M+", isDark, true, onMemoryAdd, Modifier.weight(1f))
-        MemoryChip("M−", isDark, true, onMemorySubtract, Modifier.weight(1f))
-        MemoryChip("MR", isDark, hasMemory, onMemoryRecall, Modifier.weight(1f))
-        MemoryChip("MC", isDark, hasMemory, onMemoryClear, Modifier.weight(1f))
+        MemoryChip(
+            label = "M+",
+            isDark = isDark,
+            enabled = true,
+            onClick = onMemoryAdd,
+            modifier = Modifier.weight(1f)
+        )
+        MemoryChip(
+            label = "M−",
+            isDark = isDark,
+            enabled = true,
+            onClick = onMemorySubtract,
+            modifier = Modifier.weight(1f)
+        )
+        MemoryChip(
+            label = "MR",
+            isDark = isDark,
+            enabled = hasMemory,
+            onClick = onMemoryRecall,
+            modifier = Modifier.weight(1f)
+        )
+        MemoryChip(
+            label = "MC",
+            isDark = isDark,
+            enabled = hasMemory,
+            onClick = onMemoryClear,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -621,14 +655,16 @@ private fun MemoryChip(
 }
 
 /* --------------------------------------------------------------------- */
-/* History sheet                                                         */
+/* History overlay                                                       */
 /* --------------------------------------------------------------------- */
 
 /**
- * Bottom sheet with every saved calculation. Tapping a row hands it back to
+ * Sheet with every saved calculation. Tapping a row hands it back to
  * [onSelect] so the expression can be reused.
+ *
+ * Implemented with a plain [Dialog] and a rounded card so that no
+ * experimental Material API is required.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistorySheet(
     entries: List<HistoryEntry>,
@@ -640,75 +676,90 @@ fun HistorySheet(
     val titleColor = if (isDark) DarkDisplayText else DisplayText
     val mutedColor = if (isDark) DarkMutedText else MutedText
     val accentColor = if (isDark) ForestGreenGlow else ForestGreen
+    val cardColor = if (isDark) DarkForestSurface else Color.White
+    val sheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
-    ModalBottomSheet(
+    // Swallows taps so that tapping inside the card never dismisses it.
+    val swallow = remember { MutableInteractionSource() }
+
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = if (isDark) DarkForestSurface else Color.White,
-        contentColor = titleColor,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.32f)),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "History",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = titleColor
-                    )
-                    Text(
-                        text = if (entries.isEmpty()) {
-                            "Nothing saved yet"
-                        } else {
-                            "${entries.size} saved calculation" + if (entries.size == 1) "" else "s"
-                        },
-                        fontSize = 12.sp,
-                        color = mutedColor
-                    )
-                }
-                if (entries.isNotEmpty()) {
-                    TextButton(onClick = onClearAll) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            tint = accentColor,
-                            modifier = Modifier.size(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(sheetShape)
+                    .background(cardColor)
+                    .clickable(
+                        interactionSource = swallow,
+                        indication = null
+                    ) { /* consumed */ }
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 18.dp, bottom = 24.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "History",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text(text = "Clear", color = accentColor, fontSize = 13.sp)
+                        Text(
+                            text = if (entries.isEmpty()) {
+                                "Nothing saved yet"
+                            } else {
+                                "${entries.size} saved calculation" +
+                                    if (entries.size == 1) "" else "s"
+                            },
+                            fontSize = 12.sp,
+                            color = mutedColor
+                        )
+                    }
+                    if (entries.isNotEmpty()) {
+                        TextButton(onClick = onClearAll) {
+                            Text(
+                                text = "Clear",
+                                color = accentColor,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text = "Close",
+                            color = mutedColor,
+                            fontSize = 13.sp
+                        )
                     }
                 }
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = mutedColor
-                    )
-                }
-            }
 
-            Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
 
-            if (entries.isEmpty()) {
-                EmptyHistory(isDark = isDark)
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 360.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(entries) { entry ->
-                        HistoryRow(
-                            entry = entry,
-                            isDark = isDark,
-                            onClick = { onSelect(entry) }
-                        )
+                if (entries.isEmpty()) {
+                    EmptyHistory(isDark = isDark)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 360.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(entries) { entry ->
+                            HistoryRow(
+                                entry = entry,
+                                isDark = isDark,
+                                onClick = { onSelect(entry) }
+                            )
+                        }
                     }
                 }
             }
@@ -722,14 +773,14 @@ private fun EmptyHistory(isDark: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 40.dp),
+            .padding(vertical = 36.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "=",
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isDark) ForestGreenSoftDark else ForestGreenSoft
+            color = if (isDark) ForestGreenGlow else ForestGreenSoft
         )
         Spacer(Modifier.height(10.dp))
         Text(

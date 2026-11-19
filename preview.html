@@ -21,18 +21,17 @@
   .phone{
     position:relative;
     width:260px;height:500px;
-    padding:13px 12px;
+    padding:12px;
     display:flex;flex-direction:column;gap:8px;
     overflow:hidden;
     font-family:inherit;
-    transition:background .25s ease,color .25s ease;
 
     --forest:#14532D;--forest-rich:#1E6B3A;--forest-deep:#0A2E18;--forest-bright:#2E9E5B;
     --soft:#E8F3EB;
     --text:#0F1A13;--muted:#6E7B71;--hairline:#E1EAE2;--error:#B3261E;
 
-    --page:linear-gradient(180deg,#FFFFFF 0%,#F4F9F5 52%,#E8F2EA 100%);
-    --glow:radial-gradient(120% 100% at 50% 0%,rgba(46,158,91,.10),rgba(46,158,91,0) 70%);
+    --page:linear-gradient(180deg,#FFFFFF 0%,#F4F9F5 55%,#E8F2EA 100%);
+    --glow:radial-gradient(120% 90% at 50% 0%,rgba(46,158,91,.10),rgba(46,158,91,0) 70%);
 
     --display-bg:linear-gradient(180deg,#FFFFFF 0%,#FBFDFB 100%);
     --display-border:#E1EAE2;
@@ -53,7 +52,7 @@
     --sci-border:#DEEAE1;--sci-text:#1E6B3A;
 
     --chip-bg:#E8F3EB;--chip-border:#D6E9DB;--chip-text:#14532D;
-    --tool-bg:rgba(255,255,255,.9);--tool-border:#E1EAE2;
+    --tool-bg:rgba(255,255,255,.92);--tool-border:#E1EAE2;
 
     --sheet-bg:#FFFFFF;--sheet-border:#E1EAE2;
     --item-bg:#F7FBF8;--item-border:#E7EFE8;
@@ -63,8 +62,8 @@
   .phone.dark{
     --text:#EAF5EC;--muted:#94A89A;--hairline:#223528;--error:#FF8A80;
     --forest:#6FDD93;
-    --page:linear-gradient(180deg,#06120B 0%,#08180E 52%,#0C1A11 100%);
-    --glow:radial-gradient(120% 100% at 50% 0%,rgba(111,221,147,.12),rgba(111,221,147,0) 70%);
+    --page:linear-gradient(180deg,#06120B 0%,#08180E 55%,#0D2315 100%);
+    --glow:radial-gradient(120% 90% at 50% 0%,rgba(111,221,147,.12),rgba(111,221,147,0) 70%);
 
     --display-bg:linear-gradient(180deg,#0C1A11 0%,#0A1710 100%);
     --display-border:#1E3326;
@@ -85,32 +84,32 @@
     --sci-border:#21392A;--sci-text:#7FE3A0;
 
     --chip-bg:#16301F;--chip-border:#2B4B36;--chip-text:#6FDD93;
-    --tool-bg:rgba(20,37,26,.9);--tool-border:#223528;
+    --tool-bg:rgba(20,37,26,.92);--tool-border:#223528;
 
     --sheet-bg:#0C1A11;--sheet-border:#223528;
     --item-bg:#132A1B;--item-border:#21392A;
     --res-text:#6FDD93;
   }
 
-  .phone{background:var(--page);color:var(--text);}
+  .phone{background:var(--page);color:var(--text);transition:background .25s ease,color .25s ease;}
   .phone::before{
-    content:"";position:absolute;left:0;right:0;top:0;height:120px;
+    content:"";position:absolute;left:0;right:0;top:0;height:130px;
     background:var(--glow);pointer-events:none;
   }
 
   /* ================================ header =============================== */
   .header{
-    position:relative;z-index:2;flex:0 0 auto;height:20px;
+    position:relative;z-index:2;flex:0 0 auto;height:22px;
     display:flex;align-items:center;gap:7px;padding:0 2px;
   }
   .mark{
-    width:16px;height:16px;border-radius:5px;
-    background:linear-gradient(135deg,var(--forest-rich),var(--forest) 55%,var(--forest-deep));
+    width:15px;height:15px;border-radius:5px;
+    background:linear-gradient(135deg,#1E6B3A,#14532D 55%,#0A2E18);
     box-shadow:0 3px 8px rgba(20,83,45,.28);
   }
-  .phone:not(.dark) .mark{background:linear-gradient(135deg,#1E6B3A,#14532D 55%,#0A2E18);}
+  .phone.dark .mark{background:linear-gradient(135deg,#2E9E5B,#1E6B3A 55%,#6FDD93);}
   .name{
-    font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+    font-size:12px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
     color:var(--forest);
   }
   .tools{margin-left:auto;display:flex;gap:4px;}
@@ -126,7 +125,7 @@
   }
   .tool:active{transform:scale(.92);}
   .tool.on{
-    background:linear-gradient(135deg,var(--forest-rich),var(--forest-deep));
+    background:linear-gradient(135deg,#1E6B3A,#14532D 60%,#0A2E18);
     border-color:transparent;color:#FFFFFF;
   }
   .phone.dark .tool.on{background:linear-gradient(135deg,#1E6B3A,#2E9E5B);color:#04170C;}
@@ -136,7 +135,7 @@
     position:relative;z-index:1;flex:1 1 auto;min-height:0;
     display:flex;flex-direction:column;
     padding:8px 12px 10px;
-    border-radius:24px;
+    border-radius:22px;
     border:1px solid var(--display-border);
     background:var(--display-bg);
     box-shadow:var(--display-shadow);
@@ -152,8 +151,8 @@
     transition:transform .08s ease,background .15s ease;
   }
   .chip:active{transform:scale(.94);}
-  .chip.ghost{margin-left:auto;background:transparent;color:var(--muted);border-color:var(--hairline);}
-  .chip.mem{margin-left:auto;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip.ghost{background:transparent;color:var(--muted);border-color:var(--hairline);}
+  .chip.mem{margin-left:auto;max-width:98px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .chip.ghost + .chip.mem{margin-left:0;}
 
   .secondary{
@@ -173,7 +172,7 @@
   .sci{
     position:relative;z-index:1;flex:0 0 auto;
     display:grid;grid-template-columns:repeat(6,1fr);
-    grid-auto-rows:27px;gap:5px;
+    grid-auto-rows:26px;gap:5px;
   }
   .key.sci{
     border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.1px;
@@ -210,7 +209,7 @@
   }
   .key.eq{
     border:0;
-    background:linear-gradient(135deg,var(--forest-rich) 0%,#14532D 55%,#0A2E18 100%);
+    background:linear-gradient(135deg,#1E6B3A 0%,#14532D 55%,#0A2E18 100%);
     color:#FFFFFF;font-size:21px;font-weight:600;
     box-shadow:0 4px 10px rgba(20,83,45,.26),0 10px 20px rgba(10,46,24,.20);
   }
@@ -219,7 +218,13 @@
     background:linear-gradient(135deg,#1A5F34 0%,#123F23 55%,#08240F 100%);
     box-shadow:0 2px 6px rgba(20,83,45,.28);
   }
-  .key.zero{grid-column:span 2;justify-content:center;}
+  .phone.dark .key.eq{
+    background:linear-gradient(135deg,#2E9E5B 0%,#1E6B3A 55%,#14532D 100%);
+    color:#04170C;
+    box-shadow:0 4px 12px rgba(46,158,91,.28);
+  }
+  .phone.dark .key.eq:active{background:linear-gradient(135deg,#3AB06A 0%,#25803F 100%);}
+  .key.zero{grid-column:span 2;}
 
   /* ================================ sheet ================================ */
   .scrim{
@@ -294,7 +299,9 @@
     font-size:10.5px;font-weight:600;letter-spacing:.3px;
     opacity:0;pointer-events:none;
     transition:opacity .2s ease,transform .2s ease;
+    white-space:nowrap;
   }
+  .phone.dark .toast{background:rgba(111,221,147,.94);color:#04170C;}
   .toast.show{opacity:1;transform:translate(-50%,0);}
 </style>
 </head>
@@ -380,12 +387,12 @@
 
   /* ---------------------------- constants ---------------------------- */
   var OP_PLUS = "+";
-  var OP_MINUS = "\u2212";   // −
-  var OP_TIMES = "\u00D7";   // ×
-  var OP_DIVIDE = "\u00F7";  // ÷
+  var OP_MINUS = "\u2212";
+  var OP_TIMES = "\u00D7";
+  var OP_DIVIDE = "\u00F7";
   var PCT = "%";
   var DOT = ".";
-  var PI = "\u03C0";         // π
+  var PI = "\u03C0";
   var MAX_DIGITS = 15;
   var MAX_HISTORY = 50;
 
@@ -414,9 +421,7 @@
   function isBin(c) {
     return c === OP_PLUS || c === OP_MINUS || c === OP_TIMES || c === OP_DIVIDE;
   }
-  function isNumberish(c) {
-    return isDigit(c) || c === DOT || c === PCT || c === PI;
-  }
+  function isNumberish(c) { return isDigit(c) || c === DOT || c === PCT || c === PI; }
   function lastChar(s) { return s.charAt(s.length - 1); }
 
   function readStore(key) {
@@ -427,9 +432,7 @@
   }
 
   function buzz() {
-    try {
-      if (navigator.vibrate) navigator.vibrate(8);
-    } catch (e) { /* ignore */ }
+    try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) { /* ignore */ }
   }
 
   var toastTimer = null;
@@ -439,7 +442,7 @@
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(function () {
       el.toast.classList.remove("show");
-    }, 1200);
+    }, 1300);
   }
 
   /* ---------------------------- formatting --------------------------- */
@@ -453,7 +456,6 @@
     return String(Number(v.toPrecision(12)));
   }
 
-  /** Same as [formatNumber] but uses the typographic minus for display. */
   function formatDisplay(v) {
     var s = formatNumber(v);
     if (s === null) return null;
@@ -663,7 +665,7 @@
 
   function onToggleSign() {
     if (state.error) return;
-    var base = state.result ? state.expr : state.expr;
+    var base = state.expr;
     if (base === "") { apply(OP_MINUS); return; }
 
     var start = trailingNumberStart(base);
@@ -782,17 +784,11 @@
   /* ----------------------------- history ----------------------------- */
   function saveHistory() {
     var packed = state.history.slice(0, MAX_HISTORY);
-    try {
-      writeStore(KEY_HISTORY, JSON.stringify(packed));
-    } catch (e) { /* ignore */ }
+    try { writeStore(KEY_HISTORY, JSON.stringify(packed)); } catch (e) { /* ignore */ }
   }
 
   function addHistory(expression, result) {
-    state.history.unshift({
-      e: expression,
-      r: result,
-      t: Date.now()
-    });
+    state.history.unshift({ e: expression, r: result, t: Date.now() });
     if (state.history.length > MAX_HISTORY) {
       state.history = state.history.slice(0, MAX_HISTORY);
     }
