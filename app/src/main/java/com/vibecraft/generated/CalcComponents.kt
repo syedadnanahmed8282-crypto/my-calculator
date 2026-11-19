@@ -1,11 +1,18 @@
 package com.vibecraft.generated
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,12 +37,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,6 +75,33 @@ private val CalcSciGap = 6.dp
 private val CalcBigKeyShape = RoundedCornerShape(18.dp)
 private val CalcSciChipShape = RoundedCornerShape(12.dp)
 
+/* --------------------------------------------------------------------- */
+/* Motion vocabulary                                                     */
+/* --------------------------------------------------------------------- */
+
+/** Very short colour / hover tween. */
+private val CalcQuickTween = tween<Float>(
+    durationMillis = 130,
+    easing = FastOutSlowInEasing
+)
+
+/** Bouncy spring used when a key is pressed. */
+private val CalcKeySpring = spring<Float>(
+    dampingRatio = 0.42f,
+    stiffness = Spring.StiffnessHigh
+)
+
+/** Softer spring used for panels flying in. */
+private val CalcInSpring = spring<Float>(
+    dampingRatio = 0.72f,
+    stiffness = Spring.StiffnessMediumLow
+)
+
+/** The forest gradient carried by the equals key. */
+private val CalcAccentBrush: Brush = Brush.verticalGradient(
+    colors = listOf(ForestGreenRich, ForestGreen, ForestGreenDeep)
+)
+
 /** Visual families used by [CalcKey]. */
 enum class CalcKeyStyle { Digit, Function, Operator, Accent }
 
@@ -71,7 +112,7 @@ enum class CalcKeyStyle { Digit, Function, Operator, Accent }
 /**
  * The premium display block: memory chip, angle chip, the live preview line
  * and the large expression. Tapping the big line copies it to the clipboard
- * through [onCopy].
+ * through [onCopy]. Everything here reacts with spring and fade animations.
  */
 @Composable
 fun CalculatorDisplay(
@@ -80,18 +121,49 @@ fun CalculatorDisplay(
     modifier: Modifier = Modifier
 ) {
     val dark = state.isDark
-    val primaryColor = when {
-        state.hasError -> ErrorRed
-        dark -> DarkDisplayText
-        else -> DisplayText
-    }
+    val errorFraction by animateFloatAsState(
+        targetValue = if (state.hasError) 1f else 0f,
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "displayError"
+    )
+
+    val primaryColor = lerp(if (dark) DarkDisplayText else DisplayText, ErrorRed, errorFraction)
     val mutedColor = if (dark) DarkMutedText else MutedText
-    val secondaryColor = if (state.hasError) ErrorRed else mutedColor
+    val secondaryColor = lerp(mutedColor, ErrorRed, errorFraction)
     val scroll = rememberScrollState()
 
     // Keep the newest typed characters visible when the expression grows.
     LaunchedEffect(state.primaryText) {
         scroll.animateScrollTo(scroll.maxValue)
+    }
+
+    // Spring pop when a result lands on the display.
+    val resultScale = remember { Animatable(1f) }
+    LaunchedEffect(state.showingResult) {
+        if (state.showingResult) {
+            resultScale.snapTo(0.9f)
+            resultScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring<Float>(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        } else {
+            resultScale.animateTo(targetValue = 1f, animationSpec = CalcQuickTween)
+        }
+    }
+
+    // Gentle fade on the small preview line whenever it changes.
+    val previewAlpha = remember { Animatable(1f) }
+    LaunchedEffect(state.secondaryText) {
+        if (state.hasSecondary) {
+            previewAlpha.snapTo(0.45f)
+            previewAlpha.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+            )
+        }
     }
 
     Column(
@@ -125,7 +197,10 @@ fun CalculatorDisplay(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.End,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(previewAlpha.value)
+                    .offset(y = ((1f - previewAlpha.value) * 5f).dp)
             )
             Spacer(Modifier.height(4.dp))
         }
@@ -145,7 +220,8 @@ fun CalculatorDisplay(
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = FontFamily.SansSerif,
                 letterSpacing = (-0.5).sp,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier.scale(resultScale.value)
             )
         }
     }
@@ -162,8 +238,14 @@ private fun calcDisplayFontSize(text: String): TextUnit = when {
 private fun CalcMemoryBadge(text: String, dark: Boolean) {
     val bg = if (dark) ForestGreenSoftDark else ForestGreenSoft
     val fg = if (dark) ForestGreenGlow else ForestGreen
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        appear.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 240))
+    }
     Row(
         modifier = Modifier
+            .alpha(appear.value)
+            .scale(0.9f + 0.1f * appear.value)
             .clip(RoundedCornerShape(50))
             .background(bg)
             .padding(horizontal = 10.dp, vertical = 4.dp),
@@ -185,6 +267,10 @@ private fun CalcMemoryBadge(text: String, dark: Boolean) {
 private fun CalcAngleBadge(degrees: Boolean, dark: Boolean) {
     val bg = if (dark) DarkKeySurfaceAlt else KeySurfaceAlt
     val fg = if (dark) ForestGreenGlow else ForestGreenRich
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        appear.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 240))
+    }
     Text(
         text = if (degrees) "DEG" else "RAD",
         color = fg,
@@ -192,6 +278,8 @@ private fun CalcAngleBadge(degrees: Boolean, dark: Boolean) {
         fontWeight = FontWeight.Bold,
         letterSpacing = 0.8.sp,
         modifier = Modifier
+            .alpha(appear.value)
+            .scale(0.9f + 0.1f * appear.value)
             .clip(RoundedCornerShape(50))
             .background(bg)
             .padding(horizontal = 10.dp, vertical = 4.dp)
@@ -227,25 +315,26 @@ fun ScientificPanel(
                 onClick = onToggleDegrees,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(1f)
+                    .weight(1f),
+                index = 0
             )
-            CalcSciKey("sin", isDark, onFunction)
-            CalcSciKey("cos", isDark, onFunction)
-            CalcSciKey("tan", isDark, onFunction)
+            CalcSciKey("sin", isDark, onFunction, 1)
+            CalcSciKey("cos", isDark, onFunction, 2)
+            CalcSciKey("tan", isDark, onFunction, 3)
         }
 
         CalcSciRow {
-            CalcSciKey("ln", isDark, onFunction)
-            CalcSciKey("log", isDark, onFunction)
-            CalcSciKey("√", isDark, onFunction)
-            CalcSciKey("x2", isDark, onFunction)
+            CalcSciKey("ln", isDark, onFunction, 4)
+            CalcSciKey("log", isDark, onFunction, 5)
+            CalcSciKey("√", isDark, onFunction, 6)
+            CalcSciKey("x2", isDark, onFunction, 7)
         }
 
         CalcSciRow {
-            CalcSciKey("π", isDark, onFunction)
-            CalcSciKey("e", isDark, onFunction)
-            CalcSciKey("(", isDark, onFunction)
-            CalcSciKey(")", isDark, onFunction)
+            CalcSciKey("π", isDark, onFunction, 8)
+            CalcSciKey("e", isDark, onFunction, 9)
+            CalcSciKey("(", isDark, onFunction, 10)
+            CalcSciKey(")", isDark, onFunction, 11)
         }
     }
 }
@@ -266,7 +355,8 @@ private fun CalcSciRow(content: @Composable RowScope.() -> Unit) {
 private fun RowScope.CalcSciKey(
     label: String,
     isDark: Boolean,
-    onFunction: (String) -> Unit
+    onFunction: (String) -> Unit,
+    index: Int
 ) {
     CalcSciChip(
         label = label,
@@ -275,7 +365,8 @@ private fun RowScope.CalcSciKey(
         onClick = { onFunction(label) },
         modifier = Modifier
             .fillMaxHeight()
-            .weight(1f)
+            .weight(1f),
+        index = index
     )
 }
 
@@ -285,23 +376,52 @@ private fun CalcSciChip(
     highlighted: Boolean,
     isDark: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    index: Int = 0
 ) {
-    val bg = when {
+    val baseBg = when {
         highlighted && isDark -> ForestGreenSoftDark
         highlighted -> ForestGreenSoft
         isDark -> DarkKeySurface
         else -> KeySurface
     }
+    val pressedBg = if (isDark) ForestGreenSoftDark else ForestGreenSoft
+
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val press by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = CalcQuickTween,
+        label = "sciPress"
+    )
+    val scaleValue by animateFloatAsState(
+        targetValue = if (pressed) 0.9f else 1f,
+        animationSpec = CalcKeySpring,
+        label = "sciScale"
+    )
+
+    // Staggered entrance so the panel blooms open row by row.
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(18L * index)
+        appear.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 300))
+    }
+
     val fg = if (isDark) ForestGreenGlow else ForestGreen
     val borderColor = if (isDark) DarkHairlineBorder else HairlineBorder
 
     Box(
         modifier = modifier
+            .scale(scaleValue)
+            .alpha(appear.value)
             .clip(CalcSciChipShape)
-            .background(bg)
+            .background(lerp(baseBg, pressedBg, press))
             .border(1.dp, borderColor, CalcSciChipShape)
-            .clickable { onClick() },
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -321,6 +441,7 @@ private fun CalcSciChip(
 /**
  * One calculator key. Digits are neutral, functions are tinted, operators
  * use the soft green wash and the equals key carries the forest gradient.
+ * Every key springs down under the finger and washes green while held.
  */
 @Composable
 fun CalcKey(
@@ -332,27 +453,35 @@ fun CalcKey(
     fontSize: TextUnit = 24.sp,
     icon: ImageVector? = null
 ) {
-    val container = when (style) {
-        CalcKeyStyle.Accent -> modifier
-            .clip(CalcBigKeyShape)
-            .background(AccentGradient)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
 
-        CalcKeyStyle.Operator -> modifier
-            .clip(CalcBigKeyShape)
-            .background(if (isDark) ForestGreenSoftDark else ForestGreenSoft)
+    val press by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = CalcQuickTween,
+        label = "keyPress"
+    )
+    val scaleValue by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        animationSpec = CalcKeySpring,
+        label = "keyScale"
+    )
 
-        CalcKeyStyle.Function -> modifier
-            .clip(CalcBigKeyShape)
-            .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
+    val neutral = if (isDark) DarkKeySurface else KeySurface
+    val alt = if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt
+    val soft = if (isDark) ForestGreenSoftDark else ForestGreenSoft
+    val washed = if (isDark) ForestGreenSoftDark else ForestGreenSoft
 
-        CalcKeyStyle.Digit -> modifier
-            .clip(CalcBigKeyShape)
-            .background(if (isDark) DarkKeySurface else KeySurface)
-            .border(
-                width = 1.dp,
-                color = if (isDark) DarkHairlineBorder else HairlineBorder,
-                shape = CalcBigKeyShape
-            )
+    val baseSurface = when (style) {
+        CalcKeyStyle.Digit -> neutral
+        CalcKeyStyle.Function -> alt
+        CalcKeyStyle.Operator -> soft
+        CalcKeyStyle.Accent -> ForestGreen
+    }
+    val surface = if (style == CalcKeyStyle.Accent) {
+        baseSurface
+    } else {
+        lerp(baseSurface, washed, press * 0.85f)
     }
 
     val textColor = when (style) {
@@ -362,10 +491,35 @@ fun CalcKey(
         CalcKeyStyle.Digit -> if (isDark) DarkDisplayText else DisplayText
     }
 
-    Box(
-        modifier = container.clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
+    val container = modifier
+        .scale(scaleValue)
+        .clip(CalcBigKeyShape)
+        .then(
+            if (style == CalcKeyStyle.Accent) {
+                Modifier.background(CalcAccentBrush)
+            } else {
+                Modifier
+                    .background(surface)
+                    .then(
+                        if (style == CalcKeyStyle.Digit) {
+                            Modifier.border(
+                                width = 1.dp,
+                                color = if (isDark) DarkHairlineBorder else HairlineBorder,
+                                shape = CalcBigKeyShape
+                            )
+                        } else {
+                            Modifier
+                        }
+                    )
+            }
+        )
+        .clickable(
+            interactionSource = interaction,
+            indication = null,
+            onClick = onClick
+        )
+
+    Box(modifier = container, contentAlignment = Alignment.Center) {
         if (icon != null) {
             Image(
                 imageVector = icon,
@@ -390,11 +544,23 @@ fun CalcKey(
 }
 
 @Composable
-private fun ColumnScope.CalcKeypadRow(content: @Composable RowScope.() -> Unit) {
+private fun ColumnScope.CalcKeypadRow(
+    index: Int,
+    content: @Composable RowScope.() -> Unit
+) {
+    // Rows rise into place one after another on first draw.
+    val appear = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(34L * index)
+        appear.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 320))
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .weight(1f),
+            .weight(1f)
+            .alpha(appear.value)
+            .scale(0.96f + 0.04f * appear.value),
         horizontalArrangement = Arrangement.spacedBy(CalcKeyGap),
         verticalAlignment = Alignment.CenterVertically,
         content = content
@@ -421,7 +587,7 @@ fun CalculatorKeypad(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CalcKeyGap)
     ) {
-        CalcKeypadRow {
+        CalcKeypadRow(index = 0) {
             CalcKey(
                 label = "AC",
                 onClick = onClear,
@@ -456,7 +622,7 @@ fun CalculatorKeypad(
             )
         }
 
-        CalcKeypadRow {
+        CalcKeypadRow(index = 1) {
             CalcKey(
                 label = "7",
                 onClick = { onDigit('7') },
@@ -485,7 +651,7 @@ fun CalculatorKeypad(
             )
         }
 
-        CalcKeypadRow {
+        CalcKeypadRow(index = 2) {
             CalcKey(
                 label = "4",
                 onClick = { onDigit('4') },
@@ -514,7 +680,7 @@ fun CalculatorKeypad(
             )
         }
 
-        CalcKeypadRow {
+        CalcKeypadRow(index = 3) {
             CalcKey(
                 label = "1",
                 onClick = { onDigit('1') },
@@ -543,7 +709,7 @@ fun CalculatorKeypad(
             )
         }
 
-        CalcKeypadRow {
+        CalcKeypadRow(index = 4) {
             CalcKey(
                 label = "±",
                 onClick = onToggleSign,
@@ -635,18 +801,33 @@ private fun CalcMemoryChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scaleValue by animateFloatAsState(
+        targetValue = if (pressed && enabled) 0.93f else 1f,
+        animationSpec = CalcKeySpring,
+        label = "memoryScale"
+    )
+
     val fg = when {
         isDark && enabled -> ForestGreenGlow
         enabled -> ForestGreen
         isDark -> DarkMutedText
         else -> MutedText
     }
+
     Box(
         modifier = modifier
+            .scale(scaleValue)
             .height(34.dp)
             .clip(RoundedCornerShape(50))
             .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
-            .clickable(enabled = enabled) { onClick() },
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -668,7 +849,8 @@ private fun CalcMemoryChip(
  * [onSelect] so the expression can be reused.
  *
  * Implemented with a plain [Dialog] and a rounded card so that no
- * experimental Material API is required.
+ * experimental Material API is required. The card springs up from the
+ * bottom while the scrim fades in.
  */
 @Composable
 fun HistorySheet(
@@ -687,6 +869,16 @@ fun HistorySheet(
     // Swallows taps so that tapping inside the card never dismisses it.
     val swallow = remember { MutableInteractionSource() }
 
+    // 1 = fully off screen, 0 = in place.
+    val rise = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        rise.animateTo(targetValue = 0f, animationSpec = CalcInSpring)
+    }
+    val scrim = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        scrim.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 220))
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -694,12 +886,14 @@ fun HistorySheet(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.32f)),
+                .background(Color.Black.copy(alpha = 0.32f * scrim.value)),
             contentAlignment = Alignment.BottomCenter
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .offset(y = (rise.value * 90f).dp)
+                    .alpha(1f - rise.value * 0.5f)
                     .clip(sheetShape)
                     .background(cardColor)
                     .clickable(
@@ -775,6 +969,10 @@ fun HistorySheet(
 @Composable
 private fun CalcEmptyHistory(isDark: Boolean) {
     val mutedColor = if (isDark) DarkMutedText else MutedText
+    val signAlpha = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        signAlpha.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 320))
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -785,7 +983,10 @@ private fun CalcEmptyHistory(isDark: Boolean) {
             text = "=",
             fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isDark) ForestGreenGlow else ForestGreenSoft
+            color = if (isDark) ForestGreenGlow else ForestGreenSoft,
+            modifier = Modifier
+                .alpha(signAlpha.value)
+                .scale(0.8f + 0.2f * signAlpha.value)
         )
         Spacer(Modifier.height(10.dp))
         Text(
@@ -809,6 +1010,14 @@ private fun CalcHistoryRow(
     isDark: Boolean,
     onClick: () -> Unit
 ) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scaleValue by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = CalcKeySpring,
+        label = "historyScale"
+    )
+
     val bg = if (isDark) DarkKeySurface else KeySurface
     val borderColor = if (isDark) DarkHairlineBorder else HairlineBorder
     val mutedColor = if (isDark) DarkMutedText else MutedText
@@ -820,10 +1029,15 @@ private fun CalcHistoryRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(scaleValue)
             .clip(shape)
             .background(bg)
             .border(1.dp, borderColor, shape)
-            .clickable { onClick() }
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick
+            )
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Text(

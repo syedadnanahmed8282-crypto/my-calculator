@@ -504,7 +504,11 @@ class CalculatorViewModel @JvmOverloads constructor(
         val combined = ArrayList<HistoryEntry>(_uiState.value.history.size + 1)
         combined.add(entry)
         combined.addAll(_uiState.value.history)
-        return if (combined.size > MAX_HISTORY) combined.subList(0, MAX_HISTORY) else combined
+        return if (combined.size > MAX_HISTORY) {
+            ArrayList(combined.subList(0, MAX_HISTORY))
+        } else {
+            combined
+        }
     }
 
     private fun setMemory(value: Double) {

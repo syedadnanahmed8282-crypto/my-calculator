@@ -1,5 +1,10 @@
 package com.vibecraft.generated
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -330,6 +335,56 @@ val WideKeyShape: RoundedCornerShape = RoundedCornerShape(26.dp)
 val DisplayShape: RoundedCornerShape = RoundedCornerShape(32.dp)
 
 /* --------------------------------------------------------------------- */
+/* Motion: one shared language of springs and fades for the whole app.   */
+/* Edge-to-edge screens animate, they never jump.                        */
+/* --------------------------------------------------------------------- */
+
+/** Quick fade for text swaps in the display preview line. */
+const val HisabDurationFast: Int = 150
+
+/** Standard fade / slide for panels and chips. */
+const val HisabDurationMedium: Int = 280
+
+/** Slower, luxurious entrance for large blocks of the keypad. */
+const val HisabDurationSlow: Int = 440
+
+/** Springy press feedback used by every key. */
+val HisabPressSpring = spring<Float>(
+    dampingRatio = Spring.DampingRatioMediumBouncy,
+    stiffness = Spring.StiffnessMediumLow
+)
+
+/** Tight spring for scale pops, such as the equals key lighting up. */
+val HisabScaleSpring = spring<Float>(
+    dampingRatio = 0.58f,
+    stiffness = 880f
+)
+
+/** Loose spring for sliding blocks in from the edges of the screen. */
+val HisabSlideSpring = spring<Float>(
+    dampingRatio = Spring.DampingRatioLowBouncy,
+    stiffness = Spring.StiffnessLow
+)
+
+/** Smooth fade used with text and colour changes. */
+val HisabFade = tween<Float>(
+    durationMillis = HisabDurationMedium,
+    easing = FastOutSlowInEasing
+)
+
+/** Long, gentle entrance tween for staggered elements. */
+val HisabEnter = tween<Float>(
+    durationMillis = HisabDurationSlow,
+    easing = LinearOutSlowInEasing
+)
+
+/** Extra breathing room so content never hides behind system bars. */
+val HisabEdgePadding = 18.dp
+
+/** True when the screen is drawn edge to edge behind system bars. */
+val LocalHisabEdgeToEdge = staticCompositionLocalOf { true }
+
+/* --------------------------------------------------------------------- */
 /* Theme aware accessors.                                                */
 /* --------------------------------------------------------------------- */
 
@@ -383,6 +438,9 @@ val hisabAccentSoft: Color
 /**
  * Premium white and forest green Material 3 theme for the calculator.
  *
+ * The theme also publishes the motion and edge-to-edge hints so every screen
+ * shares the same spring language and draws under the system bars.
+ *
  * @param darkTheme true for the night forest palette, false for paper white.
  */
 @Composable
@@ -390,7 +448,10 @@ fun CalculatorTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    CompositionLocalProvider(LocalHisabDark provides darkTheme) {
+    CompositionLocalProvider(
+        LocalHisabDark provides darkTheme,
+        LocalHisabEdgeToEdge provides true
+    ) {
         MaterialTheme(
             colorScheme = if (darkTheme) CalculatorDarkColorScheme else CalculatorColorScheme,
             typography = CalculatorTypography,

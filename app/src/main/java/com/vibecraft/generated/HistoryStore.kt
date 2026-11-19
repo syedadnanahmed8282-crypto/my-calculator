@@ -28,22 +28,35 @@ class HistoryStore(context: Context) {
     /** Reads the saved history, newest entry first. */
     fun loadHistory(): List<HistoryEntry> {
         val raw = prefs.getString(KEY_HISTORY, null)
-        if (raw == null || raw.isEmpty()) return emptyList()
+        if (raw.isNullOrEmpty()) return emptyList()
         val decoded = decode(raw)
-        return if (decoded.size > MAX_ENTRIES) decoded.subList(0, MAX_ENTRIES) else decoded
+        return if (decoded.size > MAX_ENTRIES) {
+            ArrayList(decoded.subList(0, MAX_ENTRIES))
+        } else {
+            decoded
+        }
     }
 
     /** Writes the whole history list back to disk (newest first). */
     fun saveHistory(entries: List<HistoryEntry>) {
-        val trimmed = if (entries.size > MAX_ENTRIES) entries.subList(0, MAX_ENTRIES) else entries
+        val trimmed = if (entries.size > MAX_ENTRIES) {
+            ArrayList(entries.subList(0, MAX_ENTRIES))
+        } else {
+            entries
+        }
         prefs.edit().putString(KEY_HISTORY, encode(trimmed)).apply()
     }
 
     /** Adds a new entry on top and keeps at most [MAX_ENTRIES] items. */
     fun addEntry(entry: HistoryEntry): List<HistoryEntry> {
+        val stamped = if (entry.timestamp > 0L) {
+            entry
+        } else {
+            entry.copy(timestamp = System.currentTimeMillis())
+        }
         val current = loadHistory()
         val updated = ArrayList<HistoryEntry>(current.size + 1)
-        updated.add(entry)
+        updated.add(stamped)
         updated.addAll(current)
         val trimmed = if (updated.size > MAX_ENTRIES) {
             ArrayList(updated.subList(0, MAX_ENTRIES))
@@ -58,6 +71,9 @@ class HistoryStore(context: Context) {
     fun clearHistory() {
         prefs.edit().remove(KEY_HISTORY).apply()
     }
+
+    /** True when at least one calculation has been stored. */
+    fun hasHistory(): Boolean = !prefs.getString(KEY_HISTORY, null).isNullOrEmpty()
 
     /* ----------------------------- theme ----------------------------- */
 
@@ -77,6 +93,9 @@ class HistoryStore(context: Context) {
         val value = raw.toDoubleOrNull() ?: return 0.0
         return if (value.isNaN() || value.isInfinite()) 0.0 else value
     }
+
+    /** True when a value is currently held in memory. */
+    fun hasMemory(): Boolean = !prefs.getString(KEY_MEMORY, null).isNullOrEmpty()
 
     /** Stores the value kept in calculator memory. */
     fun saveMemory(value: Double) {

@@ -17,25 +17,26 @@
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ================================ phone ================================ */
+  /* ============================== phone =============================== */
   .phone{
     position:relative;
     width:260px;height:500px;
-    padding:12px;
-    display:flex;flex-direction:column;gap:8px;
+    display:flex;flex-direction:column;
+    padding:0 0 18px;
     overflow:hidden;
     font-family:inherit;
+    animation:enter .5s cubic-bezier(.16,1,.3,1) both;
 
     --forest:#14532D;--forest-rich:#1E6B3A;--forest-deep:#0A2E18;--forest-bright:#2E9E5B;
     --soft:#E8F3EB;
     --text:#0F1A13;--muted:#6E7B71;--hairline:#E1EAE2;--error:#B3261E;
 
     --page:linear-gradient(180deg,#FFFFFF 0%,#F4F9F5 55%,#E8F2EA 100%);
-    --glow:radial-gradient(120% 90% at 50% 0%,rgba(46,158,91,.10),rgba(46,158,91,0) 70%);
+    --glow:radial-gradient(120% 90% at 50% 0%,rgba(46,158,91,.12),rgba(46,158,91,0) 70%);
 
     --display-bg:linear-gradient(180deg,#FFFFFF 0%,#FBFDFB 100%);
     --display-border:#E1EAE2;
-    --display-shadow:0 2px 4px rgba(15,26,19,.04),0 10px 22px rgba(20,83,45,.06);
+    --display-shadow:0 2px 4px rgba(15,26,19,.04),0 12px 26px rgba(20,83,45,.07);
 
     --key-bg:linear-gradient(180deg,#FFFFFF 0%,#F9FCFA 100%);
     --key-border:#E7EFE8;
@@ -63,11 +64,11 @@
     --text:#EAF5EC;--muted:#94A89A;--hairline:#223528;--error:#FF8A80;
     --forest:#6FDD93;
     --page:linear-gradient(180deg,#06120B 0%,#08180E 55%,#0D2315 100%);
-    --glow:radial-gradient(120% 90% at 50% 0%,rgba(111,221,147,.12),rgba(111,221,147,0) 70%);
+    --glow:radial-gradient(120% 90% at 50% 0%,rgba(111,221,147,.14),rgba(111,221,147,0) 70%);
 
     --display-bg:linear-gradient(180deg,#0C1A11 0%,#0A1710 100%);
     --display-border:#1E3326;
-    --display-shadow:0 2px 4px rgba(0,0,0,.45),0 10px 22px rgba(0,0,0,.35);
+    --display-shadow:0 2px 4px rgba(0,0,0,.45),0 12px 26px rgba(0,0,0,.38);
 
     --key-bg:linear-gradient(180deg,#16281C 0%,#14251A 100%);
     --key-border:#223528;
@@ -91,26 +92,60 @@
     --res-text:#6FDD93;
   }
 
-  .phone{background:var(--page);color:var(--text);transition:background .25s ease,color .25s ease;}
+  .phone{background:var(--page);color:var(--text);
+    transition:background .3s ease,color .3s ease;}
+
+  /* soft drifting glow behind everything — edge to edge */
   .phone::before{
-    content:"";position:absolute;left:0;right:0;top:0;height:130px;
+    content:"";position:absolute;left:-20%;right:-20%;top:-12%;height:190px;
     background:var(--glow);pointer-events:none;
+    animation:drift 9s ease-in-out infinite alternate;
+    transition:background .3s ease;
   }
 
-  /* ================================ header =============================== */
+  @keyframes drift{
+    from{transform:translate3d(-6%,-4%,0) scale(1);}
+    to{transform:translate3d(6%,5%,0) scale(1.14);}
+  }
+  @keyframes enter{
+    from{opacity:0;transform:translateY(12px) scale(.985);}
+    to{opacity:1;transform:none;}
+  }
+
+  /* ============================ status bar =========================== */
+  .statusbar{
+    position:relative;z-index:3;flex:0 0 auto;height:18px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 12px;
+    font-size:8.5px;font-weight:600;letter-spacing:.5px;
+    color:var(--muted);
+    transition:color .25s ease;
+  }
+  .sb-right{display:flex;align-items:center;gap:3px;}
+  .sb-dot{width:4px;height:4px;border-radius:50%;background:var(--muted);opacity:.75;}
+  .sb-bat{width:13px;height:6px;border-radius:2px;border:1px solid var(--muted);opacity:.8;position:relative;}
+  .sb-bat::after{content:"";position:absolute;inset:1px;width:7px;border-radius:1px;background:var(--forest-bright);}
+
+  /* ============================== header ============================= */
   .header{
-    position:relative;z-index:2;flex:0 0 auto;height:22px;
-    display:flex;align-items:center;gap:7px;padding:0 2px;
+    position:relative;z-index:3;flex:0 0 auto;height:24px;
+    display:flex;align-items:center;gap:7px;padding:0 12px;
   }
   .mark{
-    width:15px;height:15px;border-radius:5px;
-    background:linear-gradient(135deg,#1E6B3A,#14532D 55%,#0A2E18);
+    width:15px;height:15px;border-radius:5px;overflow:hidden;
     box-shadow:0 3px 8px rgba(20,83,45,.28);
+    cursor:pointer;
+    animation:markIn .55s cubic-bezier(.2,1.4,.4,1) both;
   }
-  .phone.dark .mark{background:linear-gradient(135deg,#2E9E5B,#1E6B3A 55%,#6FDD93);}
+  .mark svg{width:100%;height:100%;display:block;}
+  @keyframes markIn{
+    from{opacity:0;transform:scale(.6) rotate(-14deg);}
+    to{opacity:1;transform:none;}
+  }
+  .phone.dark .mark{box-shadow:0 3px 8px rgba(0,0,0,.5);}
   .name{
     font-size:12px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
-    color:var(--forest);
+    color:var(--forest);transition:color .3s ease;
   }
   .tools{margin-left:auto;display:flex;gap:4px;}
   .tool{
@@ -121,83 +156,122 @@
     font-family:inherit;font-size:11px;line-height:1;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;
-    transition:background .15s ease,color .15s ease,transform .08s ease;
+    transition:background .18s ease,color .18s ease,transform .18s cubic-bezier(.2,1.4,.4,1),border-color .18s ease;
   }
-  .tool:active{transform:scale(.92);}
+  .tool:active{transform:scale(.9);}
   .tool.on{
     background:linear-gradient(135deg,#1E6B3A,#14532D 60%,#0A2E18);
     border-color:transparent;color:#FFFFFF;
   }
   .phone.dark .tool.on{background:linear-gradient(135deg,#1E6B3A,#2E9E5B);color:#04170C;}
 
-  /* ================================ display ============================== */
+  /* ============================== display ============================ */
   .display{
-    position:relative;z-index:1;flex:1 1 auto;min-height:0;
+    position:relative;z-index:2;flex:1 1 auto;min-height:0;
+    margin:6px 8px 0;
     display:flex;flex-direction:column;
-    padding:8px 12px 10px;
-    border-radius:22px;
+    padding:9px 12px 11px;
+    border-radius:24px;
     border:1px solid var(--display-border);
     background:var(--display-bg);
     box-shadow:var(--display-shadow);
     overflow:hidden;cursor:pointer;
-    transition:background .25s ease,border-color .25s ease;
+    transition:background .3s ease,border-color .3s ease,box-shadow .3s ease;
   }
+  .display::after{
+    content:"";position:absolute;inset:0;border-radius:24px;
+    border:1.5px solid var(--forest-bright);
+    opacity:0;pointer-events:none;
+  }
+  .display.flash::after{animation:ring .55s ease-out;}
+  @keyframes ring{
+    0%{opacity:.55;transform:scale(.985);}
+    100%{opacity:0;transform:scale(1.03);}
+  }
+
   .chips{display:flex;align-items:center;gap:4px;margin-bottom:auto;}
   .chip{
     font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.4px;
     padding:2px 6px;border-radius:7px;cursor:pointer;
     border:1px solid var(--chip-border);
     background:var(--chip-bg);color:var(--chip-text);
-    transition:transform .08s ease,background .15s ease;
+    transition:transform .16s cubic-bezier(.2,1.4,.4,1),background .2s ease,color .2s ease,border-color .2s ease;
   }
-  .chip:active{transform:scale(.94);}
+  .chip:active{transform:scale(.92);}
   .chip.ghost{background:transparent;color:var(--muted);border-color:var(--hairline);}
-  .chip.mem{margin-left:auto;max-width:98px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip.mem{margin-left:auto;max-width:98px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    animation:pop .3s cubic-bezier(.2,1.4,.4,1) both;}
   .chip.ghost + .chip.mem{margin-left:0;}
+  @keyframes pop{
+    from{opacity:0;transform:scale(.7);}
+    to{opacity:1;transform:scale(1);}
+  }
 
   .secondary{
     min-height:15px;font-size:11.5px;line-height:15px;letter-spacing:.2px;
     color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;
-    text-overflow:ellipsis;transition:color .15s ease;
+    text-overflow:ellipsis;transition:color .2s ease;
   }
   .secondary.error{color:var(--error);}
   .primary{
     font-size:34px;font-weight:300;line-height:1.12;letter-spacing:-1.1px;
     text-align:right;color:var(--text);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    transition:font-size .1s ease-out,color .25s ease;
+    transition:font-size .14s ease-out,color .3s ease,font-weight .2s ease;
+  }
+  .primary.result{color:var(--forest);font-weight:400;letter-spacing:-.7px;}
+  .tick{animation:tick .2s cubic-bezier(.16,1,.3,1);}
+  @keyframes tick{
+    from{opacity:.3;transform:translateY(6px);}
+    to{opacity:1;transform:none;}
   }
 
-  /* ============================== scientific ============================= */
+  /* ============================ scientific =========================== */
   .sci{
-    position:relative;z-index:1;flex:0 0 auto;
+    position:relative;z-index:2;flex:0 0 auto;
+    max-height:0;opacity:0;overflow:hidden;
+    margin:0 8px;
+    transition:max-height .38s cubic-bezier(.16,1,.3,1),opacity .22s ease,margin .34s ease;
+  }
+  .sci.open{max-height:82px;opacity:1;margin-top:6px;}
+  .sci-grid{
     display:grid;grid-template-columns:repeat(6,1fr);
     grid-auto-rows:26px;gap:5px;
   }
-  .key.sci{
-    border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.1px;
-    background:var(--sci-bg);border:1px solid var(--sci-border);
-    color:var(--sci-text);box-shadow:none;
+  .sci-grid .key{
+    opacity:0;transform:translateY(-8px) scale(.94);
+    transition:opacity .2s ease,transform .36s cubic-bezier(.16,1,.3,1),background .13s ease;
   }
-  .key.sci:active{transform:scale(.94);background:var(--key-press);}
+  .sci.open .sci-grid .key{
+    opacity:1;transform:none;
+    transition-delay:calc(var(--i,0) * 20ms);
+  }
 
-  /* ================================ keypad =============================== */
+  /* ============================== keypad ============================= */
   .keypad{
-    position:relative;z-index:1;flex:0 0 auto;height:232px;
+    position:relative;z-index:2;flex:0 0 auto;height:246px;
+    margin:8px 8px 0;
     display:grid;grid-template-columns:repeat(4,1fr);
-    grid-template-rows:repeat(5,1fr);gap:7px;
+    grid-template-rows:repeat(5,1fr);gap:6px;
   }
   .key{
     margin:0;padding:0;min-width:0;
     border-radius:18px;border:1px solid var(--key-border);
     background:var(--key-bg);color:var(--text);
-    font-family:inherit;font-size:18px;font-weight:500;letter-spacing:-.2px;
+    font-family:inherit;font-size:19px;font-weight:500;letter-spacing:-.2px;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;user-select:none;
     box-shadow:var(--key-shadow);
-    transition:background .12s ease,transform .08s ease,box-shadow .12s ease;
+    transition:background .13s ease,transform .14s cubic-bezier(.2,1.4,.4,1),
+               box-shadow .13s ease,color .3s ease,border-color .3s ease;
   }
-  .key:active{transform:scale(.955);background:var(--key-press);box-shadow:none;}
+  .key:active{transform:scale(.93);background:var(--key-press);box-shadow:none;}
+  .key.tap{animation:tap .28s cubic-bezier(.2,1.4,.4,1);}
+  @keyframes tap{
+    0%{transform:scale(.93);}
+    55%{transform:scale(1.035);}
+    100%{transform:scale(1);}
+  }
 
   .key.fn{
     background:var(--fn-bg);border-color:var(--fn-border);
@@ -205,16 +279,16 @@
   }
   .key.op{
     background:var(--op-bg);border-color:var(--op-border);
-    color:var(--op-text);font-size:20px;font-weight:600;
+    color:var(--op-text);font-size:21px;font-weight:600;
   }
   .key.eq{
     border:0;
     background:linear-gradient(135deg,#1E6B3A 0%,#14532D 55%,#0A2E18 100%);
-    color:#FFFFFF;font-size:21px;font-weight:600;
+    color:#FFFFFF;font-size:22px;font-weight:600;
     box-shadow:0 4px 10px rgba(20,83,45,.26),0 10px 20px rgba(10,46,24,.20);
   }
   .key.eq:active{
-    transform:scale(.955);
+    transform:scale(.93);
     background:linear-gradient(135deg,#1A5F34 0%,#123F23 55%,#08240F 100%);
     box-shadow:0 2px 6px rgba(20,83,45,.28);
   }
@@ -225,26 +299,41 @@
   }
   .phone.dark .key.eq:active{background:linear-gradient(135deg,#3AB06A 0%,#25803F 100%);}
   .key.zero{grid-column:span 2;}
+  .key.sci{
+    border-radius:11px;font-size:10.5px;font-weight:600;letter-spacing:.1px;
+    background:var(--sci-bg);border:1px solid var(--sci-border);
+    color:var(--sci-text);box-shadow:none;
+  }
+  .key.sci:active{transform:scale(.92);background:var(--key-press);}
 
-  /* ================================ sheet ================================ */
+  /* =========================== home indicator ======================== */
+  .homebar{
+    position:absolute;left:50%;bottom:6px;z-index:3;
+    width:82px;height:4px;border-radius:3px;
+    transform:translateX(-50%);
+    background:var(--text);opacity:.18;
+    transition:background .3s ease;
+  }
+
+  /* =============================== sheet ============================= */
   .scrim{
     position:absolute;inset:0;z-index:5;
-    background:rgba(6,18,11,.36);
+    background:rgba(6,18,11,.38);
     opacity:0;pointer-events:none;
-    transition:opacity .22s ease;
+    transition:opacity .26s ease;
   }
   .scrim.show{opacity:1;pointer-events:auto;}
 
   .sheet{
-    position:absolute;left:0;right:0;bottom:0;z-index:6;height:64%;
+    position:absolute;left:0;right:0;bottom:0;z-index:6;height:66%;
     display:flex;flex-direction:column;
-    padding:10px 12px 12px;
+    padding:12px 12px 18px;
     background:var(--sheet-bg);
     border-top:1px solid var(--sheet-border);
-    border-top-left-radius:22px;border-top-right-radius:22px;
-    box-shadow:0 -10px 26px rgba(6,18,11,.20);
-    transform:translateY(110%);
-    transition:transform .26s cubic-bezier(.2,.8,.2,1),background .25s ease;
+    border-top-left-radius:24px;border-top-right-radius:24px;
+    box-shadow:0 -12px 30px rgba(6,18,11,.22);
+    transform:translateY(104%);
+    transition:transform .42s cubic-bezier(.16,1,.3,1),background .3s ease;
   }
   .sheet.open{transform:translateY(0);}
   .sheet-head{display:flex;align-items:center;gap:8px;flex:0 0 auto;height:22px;}
@@ -255,27 +344,36 @@
   .link{
     margin-left:auto;padding:0;border:0;background:transparent;
     font-family:inherit;font-size:11px;font-weight:600;color:var(--muted);
-    cursor:pointer;
+    cursor:pointer;transition:opacity .15s ease;
   }
-  .link:active{opacity:.6;}
+  .link:active{opacity:.55;}
   .close{
     width:20px;height:20px;padding:0;border-radius:7px;
     border:1px solid var(--hairline);background:transparent;
     color:var(--muted);font-family:inherit;font-size:10px;line-height:1;
     display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .2s cubic-bezier(.2,1.4,.4,1),background .18s ease;
   }
+  .close:active{transform:scale(.9) rotate(90deg);}
   .sheet-list{
     flex:1 1 auto;min-height:0;overflow-y:auto;
-    display:flex;flex-direction:column;gap:6px;padding-top:8px;
+    display:flex;flex-direction:column;gap:6px;padding-top:9px;
   }
   .sheet-list::-webkit-scrollbar{width:0;}
   .h-item{
     display:flex;align-items:center;gap:8px;
-    padding:7px 9px;border-radius:12px;
+    padding:7px 9px;border-radius:13px;
     border:1px solid var(--item-border);background:var(--item-bg);
-    cursor:pointer;transition:transform .08s ease;
+    cursor:pointer;
+    animation:itemIn .34s cubic-bezier(.16,1,.3,1) both;
+    animation-delay:calc(var(--i,0) * 28ms);
+    transition:transform .14s cubic-bezier(.2,1.4,.4,1),background .2s ease;
   }
-  .h-item:active{transform:scale(.98);}
+  .h-item:active{transform:scale(.975);}
+  @keyframes itemIn{
+    from{opacity:0;transform:translateY(9px) scale(.97);}
+    to{opacity:1;transform:none;}
+  }
   .h-expr{
     flex:1 1 auto;min-width:0;
     font-size:10.5px;color:var(--muted);
@@ -286,29 +384,164 @@
     max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .h-empty{
-    margin-top:14px;text-align:center;
+    margin-top:16px;text-align:center;
     font-size:11px;color:var(--muted);
+    animation:itemIn .3s ease both;
   }
 
-  /* ================================ toast ================================ */
+  /* =============================== toast ============================= */
   .toast{
-    position:absolute;left:50%;bottom:16px;z-index:9;
-    transform:translate(-50%,10px);
-    padding:6px 12px;border-radius:20px;
+    position:absolute;left:50%;bottom:22px;z-index:9;
+    transform:translate(-50%,12px) scale(.94);
+    padding:6px 13px;border-radius:20px;
     background:rgba(10,46,24,.94);color:#FFFFFF;
     font-size:10.5px;font-weight:600;letter-spacing:.3px;
     opacity:0;pointer-events:none;
-    transition:opacity .2s ease,transform .2s ease;
+    transition:opacity .22s ease,transform .32s cubic-bezier(.2,1.4,.4,1);
     white-space:nowrap;
   }
-  .phone.dark .toast{background:rgba(111,221,147,.94);color:#04170C;}
-  .toast.show{opacity:1;transform:translate(-50%,0);}
+  .phone.dark .toast{background:rgba(111,221,147,.95);color:#04170C;}
+  .toast.show{opacity:1;transform:translate(-50%,0) scale(1);}
+
+  /* ============================ app icon ============================= */
+  .ic-defs{position:absolute;width:0;height:0;overflow:hidden;}
+
+  /* ===================== splash (edge to edge) ======================= */
+  .splash{
+    position:absolute;inset:0;z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--page);
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:background .3s ease;
+  }
+  .splash.play{
+    opacity:1;visibility:visible;pointer-events:auto;
+    animation:splashOut .5s cubic-bezier(.16,1,.3,1) 1.2s forwards;
+  }
+  @keyframes splashOut{
+    from{opacity:1;visibility:visible;transform:scale(1);}
+    to{opacity:0;visibility:hidden;transform:scale(1.06);}
+  }
+
+  .splash-mark{
+    position:relative;width:96px;height:96px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .splash-glow{
+    position:absolute;left:50%;top:50%;width:200px;height:200px;
+    margin:-100px 0 0 -100px;border-radius:50%;
+    background:radial-gradient(circle,rgba(46,158,91,.26),rgba(46,158,91,0) 68%);
+    pointer-events:none;
+  }
+  .phone.dark .splash-glow{
+    background:radial-gradient(circle,rgba(111,221,147,.22),rgba(111,221,147,0) 68%);
+  }
+  .splash.play .splash-glow{animation:glowIn 1.6s ease-out both;}
+  @keyframes glowIn{
+    0%{opacity:0;transform:scale(.4);}
+    50%{opacity:1;transform:scale(1.02);}
+    100%{opacity:.8;transform:scale(1.18);}
+  }
+
+  .splash-ring{
+    position:absolute;left:50%;top:50%;width:96px;height:96px;
+    margin:-48px 0 0 -48px;border-radius:26px;
+    border:1.4px solid rgba(217,180,92,.6);
+    opacity:0;pointer-events:none;
+  }
+  .splash.play .splash-ring{animation:ringOut 1.3s cubic-bezier(.16,1,.3,1) .2s both;}
+  @keyframes ringOut{
+    0%{opacity:.75;transform:scale(.74);}
+    70%{opacity:.22;}
+    100%{opacity:0;transform:scale(1.52);}
+  }
+
+  .splash-icon{
+    position:relative;width:96px;height:96px;
+    filter:drop-shadow(0 16px 28px rgba(10,46,24,.30));
+  }
+  .phone.dark .splash-icon{filter:drop-shadow(0 16px 28px rgba(0,0,0,.6));}
+  .splash-icon svg{width:100%;height:100%;display:block;}
+  .splash.play .splash-icon{animation:iconIn .95s cubic-bezier(.16,1,.3,1) both;}
+  @keyframes iconIn{
+    0%{opacity:0;transform:scale(.55) rotate(-9deg);}
+    62%{opacity:1;transform:scale(1.04) rotate(1.6deg);}
+    100%{opacity:1;transform:scale(1) rotate(0deg);}
+  }
+
+  .splash-text{position:relative;margin-top:16px;text-align:center;}
+  .splash.play .splash-text{animation:textIn .6s cubic-bezier(.16,1,.3,1) .34s both;}
+  @keyframes textIn{
+    from{opacity:0;transform:translateY(9px);}
+    to{opacity:1;transform:none;}
+  }
+  .splash-name{
+    font-size:16px;font-weight:700;letter-spacing:3.6px;text-transform:uppercase;
+    color:var(--forest);transition:color .3s ease;
+  }
+  .splash-sub{
+    margin-top:5px;font-size:8px;font-weight:700;letter-spacing:2.4px;
+    text-transform:uppercase;color:var(--muted);opacity:.8;
+    transition:color .3s ease;
+  }
+
+  /* staggered entrance of the calculator behind the splash */
+  .phone.booting .statusbar{animation:riseIn .5s cubic-bezier(.16,1,.3,1) 1.15s both;}
+  .phone.booting .header{animation:riseIn .55s cubic-bezier(.16,1,.3,1) 1.21s both;}
+  .phone.booting .display{animation:riseIn .6s cubic-bezier(.16,1,.3,1) 1.27s both;}
+  .phone.booting .keypad{animation:riseIn .65s cubic-bezier(.16,1,.3,1) 1.35s both;}
+  .phone.booting .homebar{animation:barIn .5s ease 1.55s both;}
+  @keyframes riseIn{
+    from{opacity:0;transform:translateY(11px);}
+    to{opacity:1;transform:none;}
+  }
+  @keyframes barIn{
+    from{opacity:0;}
+    to{opacity:.18;}
+  }
 </style>
 </head>
 <body>
+  <svg class="ic-defs" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="icBase" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1F6B4C"/>
+        <stop offset="1" stop-color="#0B3125"/>
+      </linearGradient>
+      <radialGradient id="icGloss" cx="0.27" cy="0.15" r="0.85">
+        <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+        <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="icShade" x1="0.15" y1="0.1" x2="1" y2="1">
+        <stop offset="0" stop-color="#0A2A20" stop-opacity="0"/>
+        <stop offset="1" stop-color="#0A2A20" stop-opacity="0.45"/>
+      </linearGradient>
+      <linearGradient id="icBody" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#FFFFFF"/>
+        <stop offset="1" stop-color="#E5F1EA"/>
+      </linearGradient>
+      <linearGradient id="icScreen" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#E7F2EB"/>
+        <stop offset="1" stop-color="#D8EBDF"/>
+      </linearGradient>
+      <linearGradient id="icGold" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#F0DCA8"/>
+        <stop offset="1" stop-color="#D9B45C"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
   <div class="phone" id="phone">
+
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-right">
+        <i class="sb-dot"></i><i class="sb-dot"></i><i class="sb-bat"></i>
+      </span>
+    </div>
+
     <div class="header">
-      <div class="mark"></div>
+      <div class="mark" id="mark"></div>
       <span class="name">Hisab</span>
       <div class="tools">
         <button class="tool" id="btnSci" aria-label="Scientific">&#402;</button>
@@ -327,19 +560,21 @@
       <div class="primary" id="primary">0</div>
     </div>
 
-    <div class="sci" id="sciPanel" hidden>
-      <button class="key sci" data-fn="sin">sin</button>
-      <button class="key sci" data-fn="cos">cos</button>
-      <button class="key sci" data-fn="tan">tan</button>
-      <button class="key sci" data-fn="sqrt">&#8730;</button>
-      <button class="key sci" data-fn="ln">ln</button>
-      <button class="key sci" data-fn="log">log</button>
-      <button class="key sci" data-action="pi">&#960;</button>
-      <button class="key sci" data-fn="sqr">x&#178;</button>
-      <button class="key sci" data-fn="inv">1/x</button>
-      <button class="key sci" data-action="mplus">M+</button>
-      <button class="key sci" data-action="mminus">M&#8722;</button>
-      <button class="key sci" data-action="mrecall">MR</button>
+    <div class="sci" id="sciPanel">
+      <div class="sci-grid">
+        <button class="key sci" style="--i:0" data-fn="sin">sin</button>
+        <button class="key sci" style="--i:1" data-fn="cos">cos</button>
+        <button class="key sci" style="--i:2" data-fn="tan">tan</button>
+        <button class="key sci" style="--i:3" data-fn="sqrt">&#8730;</button>
+        <button class="key sci" style="--i:4" data-fn="ln">ln</button>
+        <button class="key sci" style="--i:5" data-fn="log">log</button>
+        <button class="key sci" style="--i:6" data-action="pi">&#960;</button>
+        <button class="key sci" style="--i:7" data-fn="sqr">x&#178;</button>
+        <button class="key sci" style="--i:8" data-fn="inv">1/x</button>
+        <button class="key sci" style="--i:9" data-action="mplus">M+</button>
+        <button class="key sci" style="--i:10" data-action="mminus">M&#8722;</button>
+        <button class="key sci" style="--i:11" data-action="mrecall">MR</button>
+      </div>
     </div>
 
     <div class="keypad" id="keypad">
@@ -368,6 +603,8 @@
       <button class="key eq" data-action="equals">=</button>
     </div>
 
+    <div class="homebar"></div>
+
     <div class="scrim" id="scrim"></div>
     <div class="sheet" id="sheet">
       <div class="sheet-head">
@@ -379,6 +616,18 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <div class="splash" id="splash">
+      <div class="splash-mark">
+        <div class="splash-glow"></div>
+        <div class="splash-ring"></div>
+        <div class="splash-icon" id="splashIcon"></div>
+      </div>
+      <div class="splash-text">
+        <div class="splash-name">Hisab</div>
+        <div class="splash-sub">Calculator</div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -413,6 +662,8 @@
   };
 
   var el = {};
+  var lastPrimary = null;
+  var lastSecondary = null;
 
   /* ---------------------------- helpers ------------------------------ */
   function $(id) { return document.getElementById(id); }
@@ -434,6 +685,16 @@
   function buzz() {
     try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) { /* ignore */ }
   }
+
+  /* replay a one shot css animation on an element */
+  function replay(node, cls) {
+    if (!node) return;
+    node.classList.remove(cls);
+    void node.offsetWidth;
+    node.classList.add(cls);
+  }
+
+  function tapAnim(node) { replay(node, "tap"); }
 
   var toastTimer = null;
   function toast(message) {
@@ -804,9 +1065,10 @@
       el.historyList.appendChild(empty);
       return;
     }
-    state.history.forEach(function (item) {
+    state.history.forEach(function (item, index) {
       var row = document.createElement("div");
       row.className = "h-item";
+      row.style.setProperty("--i", String(Math.min(index, 10)));
 
       var exprEl = document.createElement("span");
       exprEl.className = "h-expr";
@@ -859,6 +1121,7 @@
     state.error = false;
     state.result = true;
     render();
+    replay(el.display, "flash");
   }
 
   /* ----------------------------- copying ----------------------------- */
@@ -905,7 +1168,11 @@
 
   function render() {
     var primaryText = state.expr === "" ? "0" : state.expr;
-    el.primary.textContent = primaryText;
+    if (primaryText !== lastPrimary) {
+      el.primary.textContent = primaryText;
+      replay(el.primary, "tick");
+      lastPrimary = primaryText;
+    }
     fitPrimary(primaryText);
 
     var secondaryText = "";
@@ -914,25 +1181,35 @@
     } else if (!state.result) {
       secondaryText = previewOf(state.expr);
     }
-    el.secondary.textContent = secondaryText;
+    if (secondaryText !== lastSecondary) {
+      el.secondary.textContent = secondaryText;
+      if (secondaryText !== "") replay(el.secondary, "tick");
+      lastSecondary = secondaryText;
+    }
     if (state.error) {
       el.secondary.classList.add("error");
     } else {
       el.secondary.classList.remove("error");
     }
 
+    el.primary.classList.toggle("result", state.result && !state.error);
+
     if (state.memory !== 0) {
       var memText = formatDisplay(state.memory);
+      var label = "M " + (memText === null ? "0" : memText);
+      if (el.chipMem.textContent !== label) {
+        el.chipMem.textContent = label;
+        replay(el.chipMem, "mem");
+      }
       el.chipMem.hidden = false;
       el.chipMemClear.hidden = false;
-      el.chipMem.textContent = "M " + (memText === null ? "0" : memText);
     } else {
       el.chipMem.hidden = true;
       el.chipMemClear.hidden = true;
     }
 
     el.chipAngle.textContent = state.deg ? "DEG" : "RAD";
-    el.sciPanel.hidden = !state.sci;
+    el.sciPanel.classList.toggle("open", state.sci);
     el.btnSci.classList.toggle("on", state.sci);
     el.btnTheme.classList.toggle("on", state.dark);
     el.phone.classList.toggle("dark", state.dark);
@@ -940,14 +1217,16 @@
 
   /* ------------------------------ wiring ----------------------------- */
   function handleButton(btn) {
+    if (!btn) return;
     var fn = btn.getAttribute("data-fn");
-    if (fn) { buzz(); onFunction(fn); return; }
-
     var action = btn.getAttribute("data-action");
     var value = btn.getAttribute("data-value");
-    if (!action) return;
 
     buzz();
+    tapAnim(btn);
+
+    if (fn) { onFunction(fn); return; }
+    if (!action) return;
 
     switch (action) {
       case "digit": onDigit(value); break;
@@ -1014,6 +1293,54 @@
     }
   }
 
+  /* ---------------------------- app icon ----------------------------- */
+  /* The icon artwork, shared by the header badge and the splash screen:
+     a forest green squircle, a crisp white calculator and gold accents. */
+  var ICON_SVG = [
+    '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">',
+    '<rect x="0" y="0" width="100" height="100" rx="27" fill="url(#icBase)"/>',
+    '<rect x="0" y="0" width="100" height="100" rx="27" fill="url(#icGloss)"/>',
+    '<rect x="0" y="0" width="100" height="100" rx="27" fill="url(#icShade)"/>',
+    '<rect x="1.2" y="1.2" width="97.6" height="97.6" rx="25.8" fill="none" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="1.6"/>',
+    '<rect x="27" y="19.4" width="46" height="65" rx="9" fill="#03150E" fill-opacity="0.34"/>',
+    '<rect x="27" y="17.4" width="46" height="65" rx="9" fill="url(#icBody)"/>',
+    '<rect x="33.6" y="23.8" width="32.8" height="13" rx="4" fill="url(#icScreen)" stroke="url(#icGold)" stroke-width="0.9"/>',
+    '<rect x="48.4" y="27.6" width="14.6" height="2.6" rx="1.3" fill="#14553F" fill-opacity="0.82"/>',
+    '<rect x="55.2" y="32.1" width="7.8" height="2.2" rx="1.1" fill="#14553F" fill-opacity="0.42"/>',
+    '<rect x="33.6" y="41.8" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="45.5" y="41.8" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="57.4" y="41.8" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="33.6" y="51.6" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="45.5" y="51.6" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="57.4" y="51.6" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="33.6" y="61.4" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="45.5" y="61.4" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="57.4" y="61.4" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="33.6" y="71.2" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="45.5" y="71.2" width="9" height="6.9" rx="2.1" fill="#14553F" fill-opacity="0.9"/>',
+    '<rect x="57.4" y="71.2" width="9" height="6.9" rx="2.1" fill="url(#icGold)"/>',
+    '<rect x="59.6" y="73.3" width="4.6" height="1.1" rx="0.55" fill="#FFFFFF" fill-opacity="0.92"/>',
+    '<rect x="59.6" y="75.1" width="4.6" height="1.1" rx="0.55" fill="#FFFFFF" fill-opacity="0.92"/>',
+    '</svg>'
+  ].join("");
+
+  function playBootAnimation() {
+    if (!el.phone || !el.splash) return;
+    el.phone.classList.remove("booting");
+    el.splash.classList.remove("play");
+    void el.phone.offsetWidth;
+    el.phone.classList.add("booting");
+    el.splash.classList.add("play");
+  }
+
+  function replaySplash() {
+    if (!el.splash) return;
+    el.splash.classList.remove("play");
+    void el.splash.offsetWidth;
+    el.splash.classList.add("play");
+    buzz();
+  }
+
   /* ------------------------------ boot ------------------------------- */
   function loadSaved() {
     var rawHistory = readStore(KEY_HISTORY);
@@ -1057,6 +1384,9 @@
     el.btnClearHistory = $("btnClearHistory");
     el.btnCloseSheet = $("btnCloseSheet");
     el.toast = $("toast");
+    el.mark = $("mark");
+    el.splash = $("splash");
+    el.splashIcon = $("splashIcon");
 
     loadSaved();
 
@@ -1118,7 +1448,24 @@
 
     document.addEventListener("keydown", onKeyDown);
 
+    // Paint the custom app icon into the header badge and the splash.
+    if (el.mark) {
+      el.mark.innerHTML = ICON_SVG;
+      el.mark.setAttribute("tabindex", "0");
+      el.mark.setAttribute("role", "button");
+      el.mark.setAttribute("aria-label", "Replay the app icon animation");
+      el.mark.addEventListener("click", replaySplash);
+      el.mark.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          replaySplash();
+        }
+      });
+    }
+    if (el.splashIcon) el.splashIcon.innerHTML = ICON_SVG;
+
     render();
+    playBootAnimation();
   }
 
   if (document.readyState === "loading") {
