@@ -1,11 +1,21 @@
 package com.vibecraft.generated
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.log10
+import kotlin.math.round
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 /* --------------------------------------------------------------------- */
 /* Expression glyphs. The expression string is also what the display     */
@@ -23,6 +33,7 @@ internal fun isBinaryOperator(symbol: Char): Boolean =
     symbol == OP_PLUS || symbol == OP_MINUS || symbol == OP_TIMES || symbol == OP_DIVIDE
 
 private const val MAX_INPUT_DIGITS = 15
+private const val MAX_HISTORY = 100
 private const val MINUS_TEXT = "−"
 private const val ERROR_TEXT = "Error"
 
@@ -33,12 +44,22 @@ private const val ERROR_TEXT = "Error"
  * @param preview    live evaluation of [expression], empty when there is nothing useful to show.
  * @param hasError   true when the last evaluation failed (bad expression or division by zero).
  * @param showingResult true right after "=", so the next digit starts a fresh calculation.
+ * @param memory     value kept in calculator memory (0.0 when the memory is empty).
+ * @param history    saved calculations, newest first.
+ * @param isDark     true when the user picked the dark theme.
+ * @param scientific true when the scientific keypad is expanded.
+ * @param degrees    true when trigonometry works in degrees, false for radians.
  */
 data class CalculatorUiState(
     val expression: String = "",
     val preview: String = "",
     val hasError: Boolean = false,
-    val showingResult: Boolean = false
+    val showingResult: Boolean = false,
+    val memory: Double = 0.0,
+    val history: List<HistoryEntry> = emptyList(),
+    val isDark: Boolean = false,
+    val scientific: Boolean = false,
+    val degrees: Boolean = true
 ) {
     /** Big display line. */
     val primaryText: String get() = if (expression.isEmpty()) "0" else expression
@@ -47,14 +68,51 @@ data class CalculatorUiState(
     val secondaryText: String get() = if (hasError) ERROR_TEXT else preview
 
     val hasSecondary: Boolean get() = secondaryText.isNotEmpty()
+
+    /** True when something is stored in memory. */
+    val hasMemory: Boolean get() = memory != 0.0
+
+    /** Short label for the memory badge. */
+    val memoryText: String get() = formatNumber(memory)
+
+    /** Text handed to the clipboard when the user taps the display. */
+    val copyText: String get() = when {
+        hasError -> primaryText
+        preview.isNotEmpty() -> preview
+        else -> primaryText
+    }
 }
 
 class CalculatorViewModel : ViewModel() {
 
+    /** Optional convenience constructor for screens that already have a Context. */
+    constructor(context: Context) : this() {
+        attach(context)
+    }
+
+    private var store: HistoryStore? = null
+
     private val _uiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
 
-    /* ----------------------------- input ----------------------------- */
+    /* --------------------------- persistence -------------------------- */
+
+    /**
+     * Connects the view model to on-device storage so history, memory and the
+     * theme choice survive restarts. Safe to call more than once.
+     */
+    fun attach(context: Context) {
+        if (store != null) return
+        val created = HistoryStore(context)
+        store = created
+        _uiState.value = _uiState.value.copy(
+            history = created.loadHistory(),
+            memory = created.loadMemory(),
+            isDark = created.loadDarkMode()
+        )
+    }
+
+    /* ----------------------------- input ------------------------------ */
 
     fun onDigit(digit: Char) {
         val current = _uiState.value
@@ -131,14 +189,19 @@ class CalculatorViewModel : ViewModel() {
     fun onBackspace() {
         val current = _uiState.value
         if (current.hasError || current.showingResult || current.expression.isEmpty()) {
-            apply("")
+            onClear()
             return
         }
         apply(current.expression.dropLast(1))
     }
 
     fun onClear() {
-        _uiState.value = CalculatorUiState()
+        _uiState.value = _uiState.value.copy(
+            expression = "",
+            preview = "",
+            hasError = false,
+            showingResult = false
+        )
     }
 
     fun onEquals() {
@@ -156,27 +219,235 @@ class CalculatorViewModel : ViewModel() {
 
         val value = ExpressionEvaluator.evaluate(expression)
         if (value == null) {
-            _uiState.value = CalculatorUiState(expression = expression, hasError = true)
+            _uiState.value = current.copy(
+                expression = expression,
+                preview = "",
+                hasError = true,
+                showingResult = false
+            )
             return
         }
 
-        _uiState.value = CalculatorUiState(
-            expression = formatNumber(value),
+        val result = formatNumber(value)
+        val history = if (result == expression) {
+            current.history
+        } else {
+            saveEntry(
+                HistoryEntry(
+                    expression = expression,
+                    result = result,
+                    timestamp = System.currentTimeMillis()
+                )
+            )
+        }
+
+        _uiState.value = current.copy(
+            expression = result,
+            preview = "",
+            hasError = false,
+            showingResult = true,
+            history = history
+        )
+    }
+
+    /* ------------------------------ memory ---------------------------- */
+
+    fun onMemoryAdd() {
+        setMemory(_uiState.value.memory + currentValue())
+    }
+
+    fun onMemorySubtract() {
+        setMemory(_uiState.value.memory - currentValue())
+    }
+
+    fun onMemoryStore() {
+        setMemory(currentValue())
+    }
+
+    fun onMemoryRecall() {
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            expression = formatNumber(current.memory),
             preview = "",
             hasError = false,
             showingResult = true
         )
     }
 
-    /* ---------------------------- internals -------------------------- */
+    fun onMemoryClear() {
+        store?.clearMemory()
+        _uiState.value = _uiState.value.copy(memory = 0.0)
+    }
+
+    /* --------------------------- scientific --------------------------- */
+
+    fun onToggleScientific() {
+        _uiState.value = _uiState.value.copy(scientific = !_uiState.value.scientific)
+    }
+
+    fun onToggleAngle() {
+        _uiState.value = _uiState.value.copy(degrees = !_uiState.value.degrees)
+    }
+
+    /** Applies a scientific operation to the value currently on the display. */
+    fun onFunction(name: String) {
+        val current = _uiState.value
+        val base = if (current.hasError) "" else current.expression
+        val input = if (base.isEmpty()) 0.0 else (ExpressionEvaluator.evaluate(base) ?: return)
+
+        val result: Double? = when (name.lowercase(Locale.US)) {
+            "sin" -> sin(angleToRadians(input))
+            "cos" -> cos(angleToRadians(input))
+            "tan" -> {
+                val radians = angleToRadians(input)
+                if (abs(cos(radians)) < 1e-12) null else sin(radians) / cos(radians)
+            }
+            "ln" -> if (input > 0.0) ln(input) else null
+            "log" -> if (input > 0.0) log10(input) else null
+            "sqrt", "√" -> if (input >= 0.0) sqrt(input) else null
+            "sqr", "square", "x²" -> input * input
+            "inv", "1/x" -> if (input != 0.0) 1.0 / input else null
+            "exp", "eˣ" -> exp(input)
+            "fact", "n!" -> factorial(input)
+            "neg" -> -input
+            else -> return
+        }
+
+        if (result == null || !result.isFinite()) {
+            _uiState.value = current.copy(
+                expression = base,
+                preview = "",
+                hasError = true,
+                showingResult = false
+            )
+            return
+        }
+
+        _uiState.value = current.copy(
+            expression = formatNumber(cleanValue(result)),
+            preview = "",
+            hasError = false,
+            showingResult = true
+        )
+    }
+
+    fun onSin() = onFunction("sin")
+    fun onCos() = onFunction("cos")
+    fun onTan() = onFunction("tan")
+    fun onLn() = onFunction("ln")
+    fun onLog() = onFunction("log")
+    fun onSqrt() = onFunction("sqrt")
+    fun onSquare() = onFunction("sqr")
+    fun onReciprocal() = onFunction("inv")
+    fun onFactorial() = onFunction("fact")
+
+    /** Drops π or e into the expression as a number. */
+    fun onConstant(symbol: String) {
+        when (symbol) {
+            "π", "pi", "PI" -> insertValue(PI)
+            "e", "E" -> insertValue(Math.E)
+        }
+    }
+
+    fun onPi() = onConstant("π")
+    fun onEuler() = onConstant("e")
+
+    /* ------------------------------ history --------------------------- */
+
+    fun onHistorySelected(entry: HistoryEntry) {
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            expression = entry.result,
+            preview = "",
+            hasError = false,
+            showingResult = true
+        )
+    }
+
+    fun onClearHistory() {
+        store?.clearHistory()
+        _uiState.value = _uiState.value.copy(history = emptyList())
+    }
+
+    /* ------------------------------- theme ---------------------------- */
+
+    fun onToggleTheme() {
+        val next = !_uiState.value.isDark
+        store?.saveDarkMode(next)
+        _uiState.value = _uiState.value.copy(isDark = next)
+    }
+
+    fun toggleTheme() = onToggleTheme()
+
+    fun setDarkMode(enabled: Boolean) {
+        if (_uiState.value.isDark == enabled) return
+        store?.saveDarkMode(enabled)
+        _uiState.value = _uiState.value.copy(isDark = enabled)
+    }
+
+    /* ----------------------------- helpers ---------------------------- */
+
+    /** The text the screen should copy to the clipboard. */
+    fun copyText(): String = _uiState.value.copyText
 
     private fun apply(expression: String, showingResult: Boolean = false) {
-        _uiState.value = CalculatorUiState(
+        _uiState.value = _uiState.value.copy(
             expression = expression,
             preview = previewFor(expression),
             hasError = false,
             showingResult = showingResult
         )
+    }
+
+    private fun saveEntry(entry: HistoryEntry): List<HistoryEntry> {
+        val saved = store
+        if (saved != null) return saved.addEntry(entry)
+        return (listOf(entry) + _uiState.value.history).take(MAX_HISTORY)
+    }
+
+    private fun setMemory(value: Double) {
+        val safe = if (value.isFinite()) cleanValue(value) else 0.0
+        store?.saveMemory(safe)
+        _uiState.value = _uiState.value.copy(memory = safe)
+    }
+
+    private fun currentValue(): Double {
+        val current = _uiState.value
+        if (current.hasError) return 0.0
+        val expression = current.expression
+        if (expression.isEmpty()) return 0.0
+        return ExpressionEvaluator.evaluate(expression) ?: 0.0
+    }
+
+    private fun insertValue(value: Double) {
+        val current = _uiState.value
+        val base = if (current.showingResult || current.hasError) "" else current.expression
+        val start = trailingNumberStart(base)
+        val next = base.substring(0, start) + formatNumber(value)
+        apply(next)
+    }
+
+    private fun angleToRadians(value: Double): Double =
+        if (_uiState.value.degrees) Math.toRadians(value) else value
+
+    private fun factorial(value: Double): Double? {
+        if (value < 0.0 || value > 170.0) return null
+        if (abs(value - round(value)) > 1e-9) return null
+        var result = 1.0
+        var index = 2
+        val limit = value.toInt()
+        while (index <= limit) {
+            result *= index
+            index++
+        }
+        return result
+    }
+
+    private fun cleanValue(value: Double): Double {
+        if (!value.isFinite()) return value
+        if (abs(value) < 1e-12) return 0.0
+        if (abs(value) < 1e12) return round(value * 1e10) / 1e10
+        return value
     }
 
     private fun trailingNumberStart(expression: String): Int {

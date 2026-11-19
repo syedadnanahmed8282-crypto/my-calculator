@@ -5,98 +5,337 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hisab</title>
 <style>
-  :root{
-    --forest:#1B5E20;
-    --forest-deep:#0E3D13;
-    --forest-soft:#E4F1E5;
-    --key:#F4F7F4;
-    --key-alt:#EAEFEA;
-    --text:#16211A;
-    --muted:#6B756D;
-    --error:#B3261E;
-  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  [hidden]{display:none !important;}
   html,body{margin:0;height:100%;}
   body{
     background:#FFFFFF;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    color:var(--text);
+    color:#0F1A13;
     display:flex;align-items:center;justify-content:center;
     overflow:hidden;
+    -webkit-font-smoothing:antialiased;
   }
+
+  /* ================================ phone ================================ */
   .phone{
-    width:260px;height:500px;background:#FFFFFF;
-    display:flex;flex-direction:column;
-    padding:14px 12px 12px;gap:10px;overflow:hidden;
+    position:relative;
+    width:260px;height:500px;
+    padding:13px 12px;
+    display:flex;flex-direction:column;gap:8px;
+    overflow:hidden;
+    font-family:inherit;
+    transition:background .25s ease,color .25s ease;
+
+    --forest:#14532D;--forest-rich:#1E6B3A;--forest-deep:#0A2E18;--forest-bright:#2E9E5B;
+    --soft:#E8F3EB;
+    --text:#0F1A13;--muted:#6E7B71;--hairline:#E1EAE2;--error:#B3261E;
+
+    --page:linear-gradient(180deg,#FFFFFF 0%,#F4F9F5 52%,#E8F2EA 100%);
+    --glow:radial-gradient(120% 100% at 50% 0%,rgba(46,158,91,.10),rgba(46,158,91,0) 70%);
+
+    --display-bg:linear-gradient(180deg,#FFFFFF 0%,#FBFDFB 100%);
+    --display-border:#E1EAE2;
+    --display-shadow:0 2px 4px rgba(15,26,19,.04),0 10px 22px rgba(20,83,45,.06);
+
+    --key-bg:linear-gradient(180deg,#FFFFFF 0%,#F9FCFA 100%);
+    --key-border:#E7EFE8;
+    --key-shadow:0 1px 2px rgba(15,26,19,.05),0 4px 10px rgba(15,26,19,.035);
+    --key-press:linear-gradient(180deg,#F1F6F2 0%,#E9F0EA 100%);
+
+    --fn-bg:linear-gradient(180deg,#F4F9F5 0%,#EDF3EE 100%);
+    --fn-border:#DFE9E1;--fn-text:#0A2E18;
+
+    --op-bg:linear-gradient(180deg,#F3FAF4 0%,#E8F3EB 100%);
+    --op-border:#D6E9DB;--op-text:#14532D;
+
+    --sci-bg:linear-gradient(180deg,#F7FBF8 0%,#EEF6F0 100%);
+    --sci-border:#DEEAE1;--sci-text:#1E6B3A;
+
+    --chip-bg:#E8F3EB;--chip-border:#D6E9DB;--chip-text:#14532D;
+    --tool-bg:rgba(255,255,255,.9);--tool-border:#E1EAE2;
+
+    --sheet-bg:#FFFFFF;--sheet-border:#E1EAE2;
+    --item-bg:#F7FBF8;--item-border:#E7EFE8;
+    --res-text:#14532D;
   }
 
-  /* ------------------------------ header ------------------------------ */
-  .header{display:flex;align-items:center;gap:8px;padding:0 4px;flex:0 0 auto;}
-  .header span{color:var(--forest);font-size:13px;font-weight:600;letter-spacing:.2px;}
-  .header i{display:block;width:20px;height:5px;border-radius:3px;background:var(--forest-soft);}
+  .phone.dark{
+    --text:#EAF5EC;--muted:#94A89A;--hairline:#223528;--error:#FF8A80;
+    --forest:#6FDD93;
+    --page:linear-gradient(180deg,#06120B 0%,#08180E 52%,#0C1A11 100%);
+    --glow:radial-gradient(120% 100% at 50% 0%,rgba(111,221,147,.12),rgba(111,221,147,0) 70%);
 
-  /* ------------------------------ display ----------------------------- */
+    --display-bg:linear-gradient(180deg,#0C1A11 0%,#0A1710 100%);
+    --display-border:#1E3326;
+    --display-shadow:0 2px 4px rgba(0,0,0,.45),0 10px 22px rgba(0,0,0,.35);
+
+    --key-bg:linear-gradient(180deg,#16281C 0%,#14251A 100%);
+    --key-border:#223528;
+    --key-shadow:0 1px 2px rgba(0,0,0,.45);
+    --key-press:linear-gradient(180deg,#1D3325 0%,#182B1E 100%);
+
+    --fn-bg:linear-gradient(180deg,#1B2F21 0%,#182A1D 100%);
+    --fn-border:#26402E;--fn-text:#C9E6D2;
+
+    --op-bg:linear-gradient(180deg,#17301F 0%,#142B1C 100%);
+    --op-border:#2B4B36;--op-text:#6FDD93;
+
+    --sci-bg:linear-gradient(180deg,#132A1B 0%,#102215 100%);
+    --sci-border:#21392A;--sci-text:#7FE3A0;
+
+    --chip-bg:#16301F;--chip-border:#2B4B36;--chip-text:#6FDD93;
+    --tool-bg:rgba(20,37,26,.9);--tool-border:#223528;
+
+    --sheet-bg:#0C1A11;--sheet-border:#223528;
+    --item-bg:#132A1B;--item-border:#21392A;
+    --res-text:#6FDD93;
+  }
+
+  .phone{background:var(--page);color:var(--text);}
+  .phone::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:120px;
+    background:var(--glow);pointer-events:none;
+  }
+
+  /* ================================ header =============================== */
+  .header{
+    position:relative;z-index:2;flex:0 0 auto;height:20px;
+    display:flex;align-items:center;gap:7px;padding:0 2px;
+  }
+  .mark{
+    width:16px;height:16px;border-radius:5px;
+    background:linear-gradient(135deg,var(--forest-rich),var(--forest) 55%,var(--forest-deep));
+    box-shadow:0 3px 8px rgba(20,83,45,.28);
+  }
+  .phone:not(.dark) .mark{background:linear-gradient(135deg,#1E6B3A,#14532D 55%,#0A2E18);}
+  .name{
+    font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--forest);
+  }
+  .tools{margin-left:auto;display:flex;gap:4px;}
+  .tool{
+    width:22px;height:22px;padding:0;border-radius:8px;
+    border:1px solid var(--tool-border);
+    background:var(--tool-bg);
+    color:var(--muted);
+    font-family:inherit;font-size:11px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease,transform .08s ease;
+  }
+  .tool:active{transform:scale(.92);}
+  .tool.on{
+    background:linear-gradient(135deg,var(--forest-rich),var(--forest-deep));
+    border-color:transparent;color:#FFFFFF;
+  }
+  .phone.dark .tool.on{background:linear-gradient(135deg,#1E6B3A,#2E9E5B);color:#04170C;}
+
+  /* ================================ display ============================== */
   .display{
-    flex:1 1 auto;min-height:0;
-    display:flex;flex-direction:column;justify-content:flex-end;
-    padding:0 6px 4px;
+    position:relative;z-index:1;flex:1 1 auto;min-height:0;
+    display:flex;flex-direction:column;
+    padding:8px 12px 10px;
+    border-radius:24px;
+    border:1px solid var(--display-border);
+    background:var(--display-bg);
+    box-shadow:var(--display-shadow);
+    overflow:hidden;cursor:pointer;
+    transition:background .25s ease,border-color .25s ease;
   }
+  .chips{display:flex;align-items:center;gap:4px;margin-bottom:auto;}
+  .chip{
+    font-family:inherit;font-size:9px;font-weight:700;letter-spacing:.4px;
+    padding:2px 6px;border-radius:7px;cursor:pointer;
+    border:1px solid var(--chip-border);
+    background:var(--chip-bg);color:var(--chip-text);
+    transition:transform .08s ease,background .15s ease;
+  }
+  .chip:active{transform:scale(.94);}
+  .chip.ghost{margin-left:auto;background:transparent;color:var(--muted);border-color:var(--hairline);}
+  .chip.mem{margin-left:auto;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chip.ghost + .chip.mem{margin-left:0;}
+
   .secondary{
-    min-height:16px;font-size:13px;line-height:16px;letter-spacing:.2px;
+    min-height:15px;font-size:11.5px;line-height:15px;letter-spacing:.2px;
     color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;
-    text-overflow:ellipsis;
+    text-overflow:ellipsis;transition:color .15s ease;
   }
   .secondary.error{color:var(--error);}
   .primary{
-    font-size:40px;font-weight:300;line-height:1.14;letter-spacing:-1px;
+    font-size:34px;font-weight:300;line-height:1.12;letter-spacing:-1.1px;
     text-align:right;color:var(--text);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    transition:font-size .1s ease-out;
+    transition:font-size .1s ease-out,color .25s ease;
   }
 
-  /* ------------------------------ keypad ------------------------------ */
+  /* ============================== scientific ============================= */
+  .sci{
+    position:relative;z-index:1;flex:0 0 auto;
+    display:grid;grid-template-columns:repeat(6,1fr);
+    grid-auto-rows:27px;gap:5px;
+  }
+  .key.sci{
+    border-radius:10px;font-size:11px;font-weight:600;letter-spacing:.1px;
+    background:var(--sci-bg);border:1px solid var(--sci-border);
+    color:var(--sci-text);box-shadow:none;
+  }
+  .key.sci:active{transform:scale(.94);background:var(--key-press);}
+
+  /* ================================ keypad =============================== */
   .keypad{
-    flex:0 0 292px;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    grid-template-rows:repeat(5,1fr);
-    gap:8px;
-    min-height:0;
+    position:relative;z-index:1;flex:0 0 auto;height:232px;
+    display:grid;grid-template-columns:repeat(4,1fr);
+    grid-template-rows:repeat(5,1fr);gap:7px;
   }
   .key{
-    border:0;margin:0;padding:0;min-width:0;
-    border-radius:18px;
-    background:var(--key);color:var(--text);
-    font-family:inherit;font-size:21px;font-weight:400;
-    cursor:pointer;
+    margin:0;padding:0;min-width:0;
+    border-radius:18px;border:1px solid var(--key-border);
+    background:var(--key-bg);color:var(--text);
+    font-family:inherit;font-size:18px;font-weight:500;letter-spacing:-.2px;
     display:flex;align-items:center;justify-content:center;
-    transition:background .12s ease, transform .08s ease;
-    user-select:none;
+    cursor:pointer;user-select:none;
+    box-shadow:var(--key-shadow);
+    transition:background .12s ease,transform .08s ease,box-shadow .12s ease;
   }
-  .key:active{transform:scale(.96);background:#E7EDE7;}
+  .key:active{transform:scale(.955);background:var(--key-press);box-shadow:none;}
 
-  .key.fn{background:var(--key-alt);color:var(--forest-deep);font-size:18px;font-weight:500;}
-  .key.fn:active{background:#DCE4DC;}
+  .key.fn{
+    background:var(--fn-bg);border-color:var(--fn-border);
+    color:var(--fn-text);font-size:14px;font-weight:600;letter-spacing:.2px;
+  }
+  .key.op{
+    background:var(--op-bg);border-color:var(--op-border);
+    color:var(--op-text);font-size:20px;font-weight:600;
+  }
+  .key.eq{
+    border:0;
+    background:linear-gradient(135deg,var(--forest-rich) 0%,#14532D 55%,#0A2E18 100%);
+    color:#FFFFFF;font-size:21px;font-weight:600;
+    box-shadow:0 4px 10px rgba(20,83,45,.26),0 10px 20px rgba(10,46,24,.20);
+  }
+  .key.eq:active{
+    transform:scale(.955);
+    background:linear-gradient(135deg,#1A5F34 0%,#123F23 55%,#08240F 100%);
+    box-shadow:0 2px 6px rgba(20,83,45,.28);
+  }
+  .key.zero{grid-column:span 2;justify-content:center;}
 
-  .key.op{background:var(--forest-soft);color:var(--forest);font-size:23px;font-weight:600;}
-  .key.op:active{background:#D2E7D4;}
+  /* ================================ sheet ================================ */
+  .scrim{
+    position:absolute;inset:0;z-index:5;
+    background:rgba(6,18,11,.36);
+    opacity:0;pointer-events:none;
+    transition:opacity .22s ease;
+  }
+  .scrim.show{opacity:1;pointer-events:auto;}
 
-  .key.eq{background:var(--forest);color:#FFFFFF;font-size:24px;font-weight:600;}
-  .key.eq:active{background:var(--forest-deep);}
+  .sheet{
+    position:absolute;left:0;right:0;bottom:0;z-index:6;height:64%;
+    display:flex;flex-direction:column;
+    padding:10px 12px 12px;
+    background:var(--sheet-bg);
+    border-top:1px solid var(--sheet-border);
+    border-top-left-radius:22px;border-top-right-radius:22px;
+    box-shadow:0 -10px 26px rgba(6,18,11,.20);
+    transform:translateY(110%);
+    transition:transform .26s cubic-bezier(.2,.8,.2,1),background .25s ease;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet-head{display:flex;align-items:center;gap:8px;flex:0 0 auto;height:22px;}
+  .sheet-title{
+    font-size:12px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+    color:var(--forest);
+  }
+  .link{
+    margin-left:auto;padding:0;border:0;background:transparent;
+    font-family:inherit;font-size:11px;font-weight:600;color:var(--muted);
+    cursor:pointer;
+  }
+  .link:active{opacity:.6;}
+  .close{
+    width:20px;height:20px;padding:0;border-radius:7px;
+    border:1px solid var(--hairline);background:transparent;
+    color:var(--muted);font-family:inherit;font-size:10px;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .sheet-list{
+    flex:1 1 auto;min-height:0;overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;padding-top:8px;
+  }
+  .sheet-list::-webkit-scrollbar{width:0;}
+  .h-item{
+    display:flex;align-items:center;gap:8px;
+    padding:7px 9px;border-radius:12px;
+    border:1px solid var(--item-border);background:var(--item-bg);
+    cursor:pointer;transition:transform .08s ease;
+  }
+  .h-item:active{transform:scale(.98);}
+  .h-expr{
+    flex:1 1 auto;min-width:0;
+    font-size:10.5px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .h-res{
+    flex:0 0 auto;font-size:13px;font-weight:600;color:var(--res-text);
+    max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .h-empty{
+    margin-top:14px;text-align:center;
+    font-size:11px;color:var(--muted);
+  }
 
-  .key.zero{grid-column:span 2;justify-content:center;font-size:21px;}
+  /* ================================ toast ================================ */
+  .toast{
+    position:absolute;left:50%;bottom:16px;z-index:9;
+    transform:translate(-50%,10px);
+    padding:6px 12px;border-radius:20px;
+    background:rgba(10,46,24,.94);color:#FFFFFF;
+    font-size:10.5px;font-weight:600;letter-spacing:.3px;
+    opacity:0;pointer-events:none;
+    transition:opacity .2s ease,transform .2s ease;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
 </style>
 </head>
 <body>
-  <div class="phone">
-    <div class="header"><span>Hisab</span><i></i></div>
+  <div class="phone" id="phone">
+    <div class="header">
+      <div class="mark"></div>
+      <span class="name">Hisab</span>
+      <div class="tools">
+        <button class="tool" id="btnSci" aria-label="Scientific">&#402;</button>
+        <button class="tool" id="btnTheme" aria-label="Theme">&#9680;</button>
+        <button class="tool" id="btnHistory" aria-label="History">&#9776;</button>
+      </div>
+    </div>
 
-    <div class="display">
+    <div class="display" id="display">
+      <div class="chips">
+        <button class="chip" id="chipAngle">DEG</button>
+        <button class="chip ghost" id="chipMemClear" hidden>MC</button>
+        <button class="chip mem" id="chipMem" hidden>M 0</button>
+      </div>
       <div class="secondary" id="secondary"></div>
       <div class="primary" id="primary">0</div>
     </div>
 
-    <div class="keypad">
+    <div class="sci" id="sciPanel" hidden>
+      <button class="key sci" data-fn="sin">sin</button>
+      <button class="key sci" data-fn="cos">cos</button>
+      <button class="key sci" data-fn="tan">tan</button>
+      <button class="key sci" data-fn="sqrt">&#8730;</button>
+      <button class="key sci" data-fn="ln">ln</button>
+      <button class="key sci" data-fn="log">log</button>
+      <button class="key sci" data-action="pi">&#960;</button>
+      <button class="key sci" data-fn="sqr">x&#178;</button>
+      <button class="key sci" data-fn="inv">1/x</button>
+      <button class="key sci" data-action="mplus">M+</button>
+      <button class="key sci" data-action="mminus">M&#8722;</button>
+      <button class="key sci" data-action="mrecall">MR</button>
+    </div>
+
+    <div class="keypad" id="keypad">
       <button class="key fn" data-action="clear">AC</button>
       <button class="key fn" data-action="sign">&#177;</button>
       <button class="key fn" data-action="percent">%</button>
@@ -121,76 +360,130 @@
       <button class="key" data-action="decimal">.</button>
       <button class="key eq" data-action="equals">=</button>
     </div>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">History</div>
+        <button class="link" id="btnClearHistory">Clear</button>
+        <button class="close" id="btnCloseSheet">&#10005;</button>
+      </div>
+      <div class="sheet-list" id="historyList"></div>
+    </div>
+
+    <div class="toast" id="toast"></div>
   </div>
 
 <script>
 (function () {
   "use strict";
 
+  /* ---------------------------- constants ---------------------------- */
   var OP_PLUS = "+";
   var OP_MINUS = "\u2212";   // −
   var OP_TIMES = "\u00D7";   // ×
   var OP_DIVIDE = "\u00F7";  // ÷
-  var PERCENT = "%";
-  var DECIMAL = ".";
+  var PCT = "%";
+  var DOT = ".";
+  var PI = "\u03C0";         // π
   var MAX_DIGITS = 15;
+  var MAX_HISTORY = 50;
 
-  var state = { expr: "", error: false, result: false };
+  var KEY_HISTORY = "hisab.history";
+  var KEY_DARK = "hisab.dark";
+  var KEY_DEG = "hisab.deg";
+  var KEY_MEM = "hisab.mem";
 
-  var primaryEl = document.getElementById("primary");
-  var secondaryEl = document.getElementById("secondary");
+  var state = {
+    expr: "",
+    error: false,
+    result: false,
+    memory: 0,
+    deg: true,
+    dark: false,
+    sci: false,
+    history: []
+  };
 
-  /* ------------------------- helpers ------------------------- */
+  var el = {};
 
+  /* ---------------------------- helpers ------------------------------ */
+  function $(id) { return document.getElementById(id); }
+
+  function isDigit(c) { return c >= "0" && c <= "9"; }
   function isBin(c) {
     return c === OP_PLUS || c === OP_MINUS || c === OP_TIMES || c === OP_DIVIDE;
   }
+  function isNumberish(c) {
+    return isDigit(c) || c === DOT || c === PCT || c === PI;
+  }
+  function lastChar(s) { return s.charAt(s.length - 1); }
 
-  function isDigit(c) {
-    return c >= "0" && c <= "9";
+  function readStore(key) {
+    try { return window.localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function writeStore(key, value) {
+    try { window.localStorage.setItem(key, value); } catch (e) { /* ignore */ }
   }
 
-  function trailingNumberStart(s) {
-    var i = s.length;
-    while (i > 0 && (isDigit(s.charAt(i - 1)) || s.charAt(i - 1) === DECIMAL)) i--;
-    return i;
+  function buzz() {
+    try {
+      if (navigator.vibrate) navigator.vibrate(8);
+    } catch (e) { /* ignore */ }
   }
 
+  var toastTimer = null;
+  function toast(message) {
+    el.toast.textContent = message;
+    el.toast.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.toast.classList.remove("show");
+    }, 1200);
+  }
+
+  /* ---------------------------- formatting --------------------------- */
   function formatNumber(v) {
-    if (!isFinite(v)) return null;
+    if (typeof v !== "number" || !isFinite(v)) return null;
     if (v === 0) return "0";
     var abs = Math.abs(v);
     if (abs >= 1e12 || abs < 1e-9) {
-      var e = v.toExponential(6);
-      return e.replace(/\.?0+e/, "e");
+      return v.toExponential(6).replace(/\.?0+e/, "e");
     }
-    var rounded = Number(v.toPrecision(12));
-    var s = String(rounded);
-    if (s.indexOf("e") >= 0) return s;
+    return String(Number(v.toPrecision(12)));
+  }
+
+  /** Same as [formatNumber] but uses the typographic minus for display. */
+  function formatDisplay(v) {
+    var s = formatNumber(v);
+    if (s === null) return null;
+    if (s.charAt(0) === "-") return OP_MINUS + s.slice(1);
     return s;
   }
 
-  /* ---------------------- tiny evaluator --------------------- */
-
-  function tokenize(s) {
+  /* ---------------------------- evaluator ---------------------------- */
+  function tokenize(str) {
     var tokens = [];
     var i = 0;
-    while (i < s.length) {
-      var c = s.charAt(i);
-      if (isDigit(c) || c === DECIMAL) {
+    while (i < str.length) {
+      var c = str.charAt(i);
+      if (isDigit(c) || c === DOT) {
         var num = "";
-        while (i < s.length && (isDigit(s.charAt(i)) || s.charAt(i) === DECIMAL)) {
-          num += s.charAt(i);
+        while (i < str.length && (isDigit(str.charAt(i)) || str.charAt(i) === DOT)) {
+          num += str.charAt(i);
           i++;
         }
         var v = parseFloat(num);
         if (isNaN(v)) return null;
         tokens.push({ type: "num", value: v });
-      } else if (c === PERCENT) {
+      } else if (c === PI) {
+        tokens.push({ type: "num", value: Math.PI });
+        i++;
+      } else if (c === PCT) {
         if (!tokens.length || tokens[tokens.length - 1].type !== "num") return null;
         tokens[tokens.length - 1].value = tokens[tokens.length - 1].value / 100;
         i++;
-      } else if (c === OP_PLUS || c === OP_MINUS || c === OP_TIMES || c === OP_DIVIDE) {
+      } else if (isBin(c)) {
         tokens.push({ type: "op", value: c });
         i++;
       } else {
@@ -205,7 +498,8 @@
 
     function parseExpression() {
       var left = parseTerm();
-      while (pos < tokens.length && (tokens[pos].value === OP_PLUS || tokens[pos].value === OP_MINUS)) {
+      while (pos < tokens.length &&
+        (tokens[pos].value === OP_PLUS || tokens[pos].value === OP_MINUS)) {
         var op = tokens[pos].value;
         pos++;
         var right = parseTerm();
@@ -216,7 +510,8 @@
 
     function parseTerm() {
       var left = parseUnary();
-      while (pos < tokens.length && (tokens[pos].value === OP_TIMES || tokens[pos].value === OP_DIVIDE)) {
+      while (pos < tokens.length &&
+        (tokens[pos].value === OP_TIMES || tokens[pos].value === OP_DIVIDE)) {
         var op = tokens[pos].value;
         pos++;
         var right = parseUnary();
@@ -231,7 +526,8 @@
     }
 
     function parseUnary() {
-      if (pos < tokens.length && tokens[pos].type === "op" && tokens[pos].value === OP_MINUS) {
+      if (pos < tokens.length && tokens[pos].type === "op" &&
+        tokens[pos].value === OP_MINUS) {
         pos++;
         return -parseUnary();
       }
@@ -253,7 +549,7 @@
       var tokens = tokenize(expr);
       if (!tokens || !tokens.length) return null;
       var v = evalTokens(tokens);
-      if (!isFinite(v)) return null;
+      if (typeof v !== "number" || !isFinite(v)) return null;
       return v;
     } catch (e) {
       return null;
@@ -262,7 +558,7 @@
 
   function trimmedExpression(expr) {
     var t = expr;
-    while (t.length && isBin(t.charAt(t.length - 1))) t = t.slice(0, -1);
+    while (t.length && isBin(lastChar(t))) t = t.slice(0, -1);
     if (t === OP_MINUS) t = "";
     return t;
   }
@@ -272,12 +568,11 @@
     if (!t) return "";
     var v = evalExpression(t);
     if (v === null) return "";
-    var txt = formatNumber(v);
+    var txt = formatDisplay(v);
     return txt === null ? "" : txt;
   }
 
-  /* --------------------------- input -------------------------- */
-
+  /* ---------------------------- input -------------------------------- */
   function apply(next) {
     state.expr = next;
     state.error = false;
@@ -285,47 +580,72 @@
     render();
   }
 
+  function showError() {
+    state.expr = "";
+    state.error = true;
+    state.result = false;
+    render();
+  }
+
+  function trailingNumberStart(s) {
+    var i = s.length;
+    while (i > 0) {
+      var c = s.charAt(i - 1);
+      if (isDigit(c) || c === DOT) i--; else break;
+    }
+    return i;
+  }
+
+  function trailingLiteralStart(s) {
+    var i = s.length;
+    while (i > 0) {
+      var c = s.charAt(i - 1);
+      if (isDigit(c) || c === DOT || c === PI) i--; else break;
+    }
+    return i;
+  }
+
   function onDigit(d) {
     var base = (state.result || state.error) ? "" : state.expr;
+    var last = lastChar(base);
+    if (last === PI || last === PCT) {
+      apply(base + OP_TIMES + d);
+      return;
+    }
     var start = trailingNumberStart(base);
     var trailing = base.slice(start);
-    var next;
-
     if (trailing === "0") {
-      next = base.slice(0, start) + d;
+      apply(base.slice(0, start) + d);
     } else if ((trailing.match(/\d/g) || []).length >= MAX_DIGITS) {
-      next = base;
+      apply(base);
     } else {
-      next = base + d;
+      apply(base + d);
     }
-    apply(next);
   }
 
   function onDecimal() {
     var base = (state.result || state.error) ? "" : state.expr;
+    var last = lastChar(base);
+    if (last === PI || last === PCT) base = base + OP_TIMES;
     var start = trailingNumberStart(base);
     var trailing = base.slice(start);
-    var next;
-
     if (trailing === "") {
-      next = base + "0" + DECIMAL;
-    } else if (trailing.indexOf(DECIMAL) >= 0) {
-      next = base;
+      apply(base + "0" + DOT);
+    } else if (trailing.indexOf(DOT) >= 0) {
+      apply(base);
     } else {
-      next = base + DECIMAL;
+      apply(base + DOT);
     }
-    apply(next);
   }
 
   function onOperator(symbol) {
     var base = state.error ? "" : state.expr;
     var next;
-
     if (base === "" || base === OP_MINUS) {
       next = symbol === OP_MINUS ? OP_MINUS : "";
-    } else if (isBin(base.charAt(base.length - 1))) {
+    } else if (isBin(lastChar(base))) {
       next = base.slice(0, -1) + symbol;
-    } else if (base.charAt(base.length - 1) === DECIMAL) {
+    } else if (lastChar(base) === DOT) {
       next = base.slice(0, -1) + symbol;
     } else {
       next = base + symbol;
@@ -336,23 +656,19 @@
   function onPercent() {
     var base = state.error ? "" : state.expr;
     if (base === "") return;
-    var last = base.charAt(base.length - 1);
-    if (!(isDigit(last) || last === PERCENT)) return;
-    apply(base + PERCENT);
+    var last = lastChar(base);
+    if (!(isDigit(last) || last === PCT || last === PI)) return;
+    apply(base + PCT);
   }
 
   function onToggleSign() {
     if (state.error) return;
-
-    var base = state.result ? "" : state.expr;
-    if (base === "") {
-      apply(OP_MINUS);
-      return;
-    }
+    var base = state.result ? state.expr : state.expr;
+    if (base === "") { apply(OP_MINUS); return; }
 
     var start = trailingNumberStart(base);
     var trailing = base.slice(start);
-    if (trailing === "") return; // ends with an operator
+    if (trailing === "") return;
 
     var before = base.charAt(start - 1);
     var unaryMinus = before === OP_MINUS &&
@@ -365,6 +681,13 @@
     }
   }
 
+  function onPi() {
+    var base = (state.result || state.error) ? "" : state.expr;
+    var last = lastChar(base);
+    if (base !== "" && isNumberish(last)) base = base + OP_TIMES;
+    apply(base + PI);
+  }
+
   function onClear() {
     state.expr = "";
     state.error = false;
@@ -373,98 +696,294 @@
   }
 
   function onBackspace() {
-    if (state.error) {
-      onClear();
-      return;
-    }
+    if (state.error) { onClear(); return; }
     var base = state.result ? "" : state.expr;
     apply(base.slice(0, -1));
   }
 
+  function currentValue() {
+    if (state.error) return null;
+    var t = trimmedExpression(state.expr);
+    if (!t) return null;
+    return evalExpression(t);
+  }
+
+  /* ---------------------------- functions ---------------------------- */
+  function computeUnary(name, v) {
+    var a = state.deg ? v * Math.PI / 180 : v;
+    var t;
+    switch (name) {
+      case "sin": return Math.sin(a);
+      case "cos": return Math.cos(a);
+      case "tan":
+        t = Math.tan(a);
+        return Math.abs(t) > 1e12 ? null : t;
+      case "sqrt": return v < 0 ? null : Math.sqrt(v);
+      case "ln": return v <= 0 ? null : Math.log(v);
+      case "log": return v <= 0 ? null : Math.log(v) / Math.LN10;
+      case "sqr": return v * v;
+      case "inv": return v === 0 ? null : 1 / v;
+      default: return null;
+    }
+  }
+
+  function onFunction(name) {
+    if (state.error) { toast("Clear the error first"); return; }
+    var base = state.expr;
+    if (base === "") { toast("Enter a number first"); return; }
+
+    var start = trailingLiteralStart(base);
+    var lit = base.slice(start);
+    if (lit === "" || lit === DOT) { toast("Enter a number first"); return; }
+
+    var v = lit === PI ? Math.PI : parseFloat(lit);
+    if (isNaN(v)) return;
+
+    var r = computeUnary(name, v);
+    if (r === null || !isFinite(r)) { showError(); return; }
+
+    var txt = formatDisplay(r);
+    if (txt === null) { showError(); return; }
+
+    apply(base.slice(0, start) + txt);
+  }
+
+  /* ----------------------------- memory ------------------------------ */
+  function saveMemory() { writeStore(KEY_MEM, String(state.memory)); }
+
+  function onMemoryAdd(sign) {
+    var v = currentValue();
+    if (v === null) { toast("Nothing to store"); return; }
+    state.memory += sign * v;
+    if (Math.abs(state.memory) < 1e-12) state.memory = 0;
+    saveMemory();
+    render();
+    toast(sign > 0 ? "Added to memory" : "Subtracted from memory");
+  }
+
+  function onMemoryRecall() {
+    if (state.memory === 0) { toast("Memory is empty"); return; }
+    var txt = formatDisplay(state.memory);
+    if (txt === null) return;
+    var base = (state.result || state.error) ? "" : state.expr;
+    var last = lastChar(base);
+    var next = base;
+    if (base !== "" && isNumberish(last)) next += OP_TIMES;
+    apply(next + txt);
+  }
+
+  function onMemoryClear() {
+    state.memory = 0;
+    saveMemory();
+    render();
+    toast("Memory cleared");
+  }
+
+  /* ----------------------------- history ----------------------------- */
+  function saveHistory() {
+    var packed = state.history.slice(0, MAX_HISTORY);
+    try {
+      writeStore(KEY_HISTORY, JSON.stringify(packed));
+    } catch (e) { /* ignore */ }
+  }
+
+  function addHistory(expression, result) {
+    state.history.unshift({
+      e: expression,
+      r: result,
+      t: Date.now()
+    });
+    if (state.history.length > MAX_HISTORY) {
+      state.history = state.history.slice(0, MAX_HISTORY);
+    }
+    saveHistory();
+  }
+
+  function renderHistory() {
+    el.historyList.innerHTML = "";
+    if (!state.history.length) {
+      var empty = document.createElement("div");
+      empty.className = "h-empty";
+      empty.textContent = "No calculations yet";
+      el.historyList.appendChild(empty);
+      return;
+    }
+    state.history.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "h-item";
+
+      var exprEl = document.createElement("span");
+      exprEl.className = "h-expr";
+      exprEl.textContent = item.e;
+
+      var resEl = document.createElement("span");
+      resEl.className = "h-res";
+      resEl.textContent = item.r;
+
+      row.appendChild(exprEl);
+      row.appendChild(resEl);
+
+      row.addEventListener("click", function () {
+        state.expr = item.r;
+        state.error = false;
+        state.result = true;
+        closeSheet();
+        render();
+        buzz();
+      });
+
+      el.historyList.appendChild(row);
+    });
+  }
+
+  function openSheet() {
+    renderHistory();
+    el.sheet.classList.add("open");
+    el.scrim.classList.add("show");
+  }
+
+  function closeSheet() {
+    el.sheet.classList.remove("open");
+    el.scrim.classList.remove("show");
+  }
+
+  /* ----------------------------- equals ------------------------------ */
   function onEquals() {
     var t = trimmedExpression(state.expr);
     if (!t) return;
 
     var v = evalExpression(t);
-    if (v === null) {
-      state.expr = "";
-      state.error = true;
-      state.result = false;
-      render();
-      return;
-    }
+    if (v === null) { showError(); return; }
 
-    var txt = formatNumber(v);
-    if (txt === null) {
-      state.expr = "";
-      state.error = true;
-      state.result = false;
-      render();
-      return;
-    }
+    var txt = formatDisplay(v);
+    if (txt === null) { showError(); return; }
 
+    addHistory(t, txt);
     state.expr = txt;
     state.error = false;
     state.result = true;
     render();
   }
 
-  /* --------------------------- render ------------------------- */
+  /* ----------------------------- copying ----------------------------- */
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    } catch (e) { /* ignore */ }
+  }
 
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function onDisplayTap() {
+    var primaryText = state.expr === "" ? "0" : state.expr;
+    var pv = state.error ? "" : previewOf(state.expr);
+    var text = pv !== "" ? pv : primaryText;
+    copyText(text);
+    toast("Copied " + text);
+    buzz();
+  }
+
+  /* ----------------------------- render ------------------------------ */
   function fitPrimary(text) {
-    var len = text.length;
-    var size = 40;
-    if (len > 8) size = 34;
-    if (len > 11) size = 28;
-    if (len > 14) size = 23;
-    primaryEl.style.fontSize = size + "px";
+    var n = text.length;
+    var size = 34;
+    if (n > 8) size = 29;
+    if (n > 11) size = 24;
+    if (n > 14) size = 20;
+    el.primary.style.fontSize = size + "px";
   }
 
   function render() {
     var primaryText = state.expr === "" ? "0" : state.expr;
-    primaryEl.textContent = primaryText;
+    el.primary.textContent = primaryText;
     fitPrimary(primaryText);
 
-    var secondaryText = state.error
-      ? "Error"
-      : (state.result ? "" : previewOf(state.expr));
-
-    secondaryEl.textContent = secondaryText;
+    var secondaryText = "";
     if (state.error) {
-      secondaryEl.classList.add("error");
+      secondaryText = "Error";
+    } else if (!state.result) {
+      secondaryText = previewOf(state.expr);
+    }
+    el.secondary.textContent = secondaryText;
+    if (state.error) {
+      el.secondary.classList.add("error");
     } else {
-      secondaryEl.classList.remove("error");
+      el.secondary.classList.remove("error");
+    }
+
+    if (state.memory !== 0) {
+      var memText = formatDisplay(state.memory);
+      el.chipMem.hidden = false;
+      el.chipMemClear.hidden = false;
+      el.chipMem.textContent = "M " + (memText === null ? "0" : memText);
+    } else {
+      el.chipMem.hidden = true;
+      el.chipMemClear.hidden = true;
+    }
+
+    el.chipAngle.textContent = state.deg ? "DEG" : "RAD";
+    el.sciPanel.hidden = !state.sci;
+    el.btnSci.classList.toggle("on", state.sci);
+    el.btnTheme.classList.toggle("on", state.dark);
+    el.phone.classList.toggle("dark", state.dark);
+  }
+
+  /* ------------------------------ wiring ----------------------------- */
+  function handleButton(btn) {
+    var fn = btn.getAttribute("data-fn");
+    if (fn) { buzz(); onFunction(fn); return; }
+
+    var action = btn.getAttribute("data-action");
+    var value = btn.getAttribute("data-value");
+    if (!action) return;
+
+    buzz();
+
+    switch (action) {
+      case "digit": onDigit(value); break;
+      case "decimal": onDecimal(); break;
+      case "op": onOperator(value); break;
+      case "percent": onPercent(); break;
+      case "sign": onToggleSign(); break;
+      case "clear": onClear(); break;
+      case "equals": onEquals(); break;
+      case "pi": onPi(); break;
+      case "mplus": onMemoryAdd(1); break;
+      case "mminus": onMemoryAdd(-1); break;
+      case "mrecall": onMemoryRecall(); break;
+      default: break;
     }
   }
 
-  /* --------------------------- events ------------------------- */
-
-  var buttons = document.querySelectorAll(".keypad .key");
-  for (var i = 0; i < buttons.length; i++) {
-    buttons[i].addEventListener("click", function () {
-      var action = this.getAttribute("data-action");
-      var value = this.getAttribute("data-value");
-
-      if (action === "digit") {
-        onDigit(value);
-      } else if (action === "decimal") {
-        onDecimal();
-      } else if (action === "op") {
-        onOperator(value);
-      } else if (action === "percent") {
-        onPercent();
-      } else if (action === "sign") {
-        onToggleSign();
-      } else if (action === "clear") {
-        onClear();
-      } else if (action === "equals") {
-        onEquals();
+  function bindKeypad(container) {
+    container.addEventListener("click", function (ev) {
+      var node = ev.target;
+      while (node && node !== container && node.tagName !== "BUTTON") {
+        node = node.parentNode;
       }
+      if (!node || node.tagName !== "BUTTON") return;
+      handleButton(node);
     });
   }
 
-  document.addEventListener("keydown", function (e) {
+  function onKeyDown(e) {
     var k = e.key;
+    var handled = true;
+
     if (k >= "0" && k <= "9" && k.length === 1) {
       onDigit(k);
     } else if (k === "." || k === ",") {
@@ -479,21 +998,138 @@
       onOperator(OP_DIVIDE);
     } else if (k === "%") {
       onPercent();
+    } else if (k === "p") {
+      onPi();
     } else if (k === "Enter" || k === "=") {
-      e.preventDefault();
       onEquals();
     } else if (k === "Backspace") {
-      e.preventDefault();
       onBackspace();
     } else if (k === "Escape" || k === "Delete") {
       onClear();
+    } else if (k === "h" || k === "H") {
+      if (el.sheet.classList.contains("open")) closeSheet(); else openSheet();
     } else {
-      return;
+      handled = false;
     }
-    e.preventDefault();
-  });
 
-  render();
+    if (handled) {
+      e.preventDefault();
+      buzz();
+    }
+  }
+
+  /* ------------------------------ boot ------------------------------- */
+  function loadSaved() {
+    var rawHistory = readStore(KEY_HISTORY);
+    if (rawHistory) {
+      try {
+        var arr = JSON.parse(rawHistory);
+        if (arr instanceof Array) {
+          state.history = arr.filter(function (it) {
+            return it && typeof it.e === "string" && typeof it.r === "string";
+          }).slice(0, MAX_HISTORY);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    state.dark = readStore(KEY_DARK) === "1";
+
+    var deg = readStore(KEY_DEG);
+    state.deg = deg === null ? true : deg === "1";
+
+    var mem = readStore(KEY_MEM);
+    var mv = mem === null ? 0 : parseFloat(mem);
+    state.memory = isNaN(mv) ? 0 : mv;
+  }
+
+  function boot() {
+    el.phone = $("phone");
+    el.display = $("display");
+    el.primary = $("primary");
+    el.secondary = $("secondary");
+    el.chipAngle = $("chipAngle");
+    el.chipMem = $("chipMem");
+    el.chipMemClear = $("chipMemClear");
+    el.sciPanel = $("sciPanel");
+    el.keypad = $("keypad");
+    el.btnSci = $("btnSci");
+    el.btnTheme = $("btnTheme");
+    el.btnHistory = $("btnHistory");
+    el.sheet = $("sheet");
+    el.scrim = $("scrim");
+    el.historyList = $("historyList");
+    el.btnClearHistory = $("btnClearHistory");
+    el.btnCloseSheet = $("btnCloseSheet");
+    el.toast = $("toast");
+
+    loadSaved();
+
+    bindKeypad(el.keypad);
+    bindKeypad(el.sciPanel);
+
+    el.display.addEventListener("click", onDisplayTap);
+
+    el.chipAngle.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      state.deg = !state.deg;
+      writeStore(KEY_DEG, state.deg ? "1" : "0");
+      render();
+      toast(state.deg ? "Degrees" : "Radians");
+      buzz();
+    });
+
+    el.chipMem.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      onMemoryRecall();
+      buzz();
+    });
+
+    el.chipMemClear.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      onMemoryClear();
+      buzz();
+    });
+
+    el.btnSci.addEventListener("click", function () {
+      state.sci = !state.sci;
+      render();
+      buzz();
+    });
+
+    el.btnTheme.addEventListener("click", function () {
+      state.dark = !state.dark;
+      writeStore(KEY_DARK, state.dark ? "1" : "0");
+      render();
+      toast(state.dark ? "Night forest" : "Paper white");
+      buzz();
+    });
+
+    el.btnHistory.addEventListener("click", function () {
+      openSheet();
+      buzz();
+    });
+
+    el.btnCloseSheet.addEventListener("click", closeSheet);
+    el.scrim.addEventListener("click", closeSheet);
+
+    el.btnClearHistory.addEventListener("click", function () {
+      state.history = [];
+      saveHistory();
+      renderHistory();
+      toast("History cleared");
+      buzz();
+    });
+
+    document.addEventListener("keydown", onKeyDown);
+
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();
 </script>
 </body>

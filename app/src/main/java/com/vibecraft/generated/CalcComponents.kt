@@ -1,0 +1,804 @@
+package com.vibecraft.generated
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/* --------------------------------------------------------------------- */
+/* Shared metrics                                                        */
+/* --------------------------------------------------------------------- */
+
+private val KeyGap = 8.dp
+private val SciGap = 6.dp
+private val KeyShape = RoundedCornerShape(18.dp)
+private val SciShape = RoundedCornerShape(12.dp)
+
+/** Visual families used by [CalcKey]. */
+enum class CalcKeyStyle { Digit, Function, Operator, Accent }
+
+/* --------------------------------------------------------------------- */
+/* Display                                                               */
+/* --------------------------------------------------------------------- */
+
+/**
+ * The premium display block: memory chip, angle chip, the live preview line
+ * and the large expression. Tapping the big line copies it to the clipboard
+ * through [onCopy].
+ */
+@Composable
+fun CalculatorDisplay(
+    state: CalculatorUiState,
+    onCopy: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dark = state.isDark
+    val primaryColor = when {
+        state.hasError -> ErrorRed
+        dark -> DarkDisplayText
+        else -> DisplayText
+    }
+    val mutedColor = if (dark) DarkMutedText else MutedText
+    val secondaryColor = if (state.hasError) ErrorRed else mutedColor
+    val scroll = rememberScrollState()
+
+    // Keep the newest typed characters visible when the expression grows.
+    LaunchedEffect(state.primaryText, scroll.maxValue) {
+        scroll.animateScrollTo(scroll.maxValue)
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 104.dp),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (state.hasMemory) {
+                MemoryBadge(text = state.memoryText, dark = dark)
+            }
+            Spacer(Modifier.weight(1f))
+            if (state.scientific) {
+                AngleBadge(degrees = state.degrees, dark = dark)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        if (state.hasSecondary) {
+            Text(
+                text = state.secondaryText,
+                color = secondaryColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(4.dp))
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { onCopy() }
+                .horizontalScroll(scroll),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Text(
+                text = state.primaryText,
+                color = primaryColor,
+                fontSize = displayFontSize(state.primaryText),
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = FontFamily.SansSerif,
+                letterSpacing = (-0.5).sp,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+private fun displayFontSize(text: String): TextUnit = when {
+    text.length <= 9 -> 44.sp
+    text.length <= 13 -> 34.sp
+    text.length <= 18 -> 26.sp
+    else -> 20.sp
+}
+
+@Composable
+private fun MemoryBadge(text: String, dark: Boolean) {
+    val bg = if (dark) ForestGreenSoftDark else ForestGreenSoft
+    val fg = if (dark) ForestGreenGlow else ForestGreen
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("M", color = fg, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = text,
+            color = fg,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun AngleBadge(degrees: Boolean, dark: Boolean) {
+    val bg = if (dark) DarkKeySurfaceAlt else KeySurfaceAlt
+    val fg = if (dark) ForestGreenGlow else ForestGreenRich
+    Text(
+        text = if (degrees) "DEG" else "RAD",
+        color = fg,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.8.sp,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    )
+}
+
+/* --------------------------------------------------------------------- */
+/* Scientific panel                                                      */
+/* --------------------------------------------------------------------- */
+
+/**
+ * Expandable row of scientific keys. [onFunction] receives the raw key name
+ * ("sin", "cos", "log", "√", "x²", "1/x", "π", "e", "(", ")") so the view
+ * model decides how to fold it into the expression.
+ */
+@Composable
+fun ScientificPanel(
+    degrees: Boolean,
+    isDark: Boolean,
+    onFunction: (String) -> Unit,
+    onToggleDegrees: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rows = listOf(
+        listOf(TAG_ANGLE, "sin", "cos", "tan"),
+        listOf("ln", "log", "√", "x²"),
+        listOf("π", "e", "(", ")")
+    )
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(SciGap)
+    ) {
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp),
+                horizontalArrangement = Arrangement.spacedBy(SciGap)
+            ) {
+                row.forEach { key ->
+                    if (key == TAG_ANGLE) {
+                        SciChip(
+                            label = if (degrees) "DEG" else "RAD",
+                            highlighted = true,
+                            isDark = isDark,
+                            onClick = onToggleDegrees,
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .weight(1f)
+                        )
+                    } else {
+                        SciChip(
+                            label = key,
+                            highlighted = false,
+                            isDark = isDark,
+                            onClick = { onFunction(key) },
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val TAG_ANGLE = "\u0001angle"
+
+@Composable
+private fun SciChip(
+    label: String,
+    highlighted: Boolean,
+    isDark: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bg = when {
+        highlighted && isDark -> ForestGreenSoftDark
+        highlighted -> ForestGreenSoft
+        isDark -> DarkKeySurface
+        else -> KeySurface
+    }
+    val fg = if (isDark) ForestGreenGlow else ForestGreen
+    val borderColor = if (isDark) DarkHairlineBorder else HairlineBorder
+
+    Box(
+        modifier = modifier
+            .clip(SciShape)
+            .background(bg)
+            .border(1.dp, borderColor, SciShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = fg,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
+        )
+    }
+}
+
+/* --------------------------------------------------------------------- */
+/* Keys                                                                  */
+/* --------------------------------------------------------------------- */
+
+/**
+ * One calculator key. Digits are neutral, functions are tinted, operators
+ * use the soft green wash and the equals key carries the forest gradient.
+ */
+@Composable
+fun CalcKey(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    style: CalcKeyStyle = CalcKeyStyle.Digit,
+    isDark: Boolean = false,
+    fontSize: TextUnit = 24.sp,
+    icon: ImageVector? = null
+) {
+    val container = when (style) {
+        CalcKeyStyle.Accent ->
+            modifier
+                .clip(KeyShape)
+                .background(AccentGradient)
+
+        CalcKeyStyle.Operator ->
+            modifier
+                .clip(KeyShape)
+                .background(if (isDark) ForestGreenSoftDark else ForestGreenSoft)
+
+        CalcKeyStyle.Function ->
+            modifier
+                .clip(KeyShape)
+                .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
+
+        CalcKeyStyle.Digit ->
+            modifier
+                .clip(KeyShape)
+                .background(if (isDark) DarkKeySurface else KeySurface)
+                .border(
+                    width = 1.dp,
+                    color = if (isDark) DarkHairlineBorder else HairlineBorder,
+                    shape = KeyShape
+                )
+    }
+
+    val textColor = when (style) {
+        CalcKeyStyle.Accent -> Color.White
+        CalcKeyStyle.Operator -> if (isDark) ForestGreenGlow else ForestGreen
+        CalcKeyStyle.Function -> if (isDark) ForestGreenGlow else ForestGreenRich
+        CalcKeyStyle.Digit -> if (isDark) DarkDisplayText else DisplayText
+    }
+
+    Box(
+        modifier = container.clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = textColor,
+                modifier = Modifier.size(22.dp)
+            )
+        } else {
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = fontSize,
+                fontWeight = when (style) {
+                    CalcKeyStyle.Accent, CalcKeyStyle.Operator -> FontWeight.SemiBold
+                    else -> FontWeight.Medium
+                },
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.KeypadRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(KeyGap),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content
+    )
+}
+
+/** The classic 4 × 5 keypad, tuned for the forest green palette. */
+@Composable
+fun CalculatorKeypad(
+    state: CalculatorUiState,
+    onDigit: (Char) -> Unit,
+    onDecimal: () -> Unit,
+    onOperator: (Char) -> Unit,
+    onEquals: () -> Unit,
+    onClear: () -> Unit,
+    onBackspace: () -> Unit,
+    onPercent: () -> Unit,
+    onToggleSign: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dark = state.isDark
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(KeyGap)
+    ) {
+        KeypadRow {
+            CalcKey(
+                label = "AC",
+                onClick = onClear,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Function,
+                isDark = dark,
+                fontSize = 18.sp
+            )
+            CalcKey(
+                label = "Backspace",
+                onClick = onBackspace,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Function,
+                isDark = dark,
+                icon = Icons.Filled.Clear
+            )
+            CalcKey(
+                label = "%",
+                onClick = onPercent,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Function,
+                isDark = dark,
+                fontSize = 20.sp
+            )
+            CalcKey(
+                label = OP_DIVIDE.toString(),
+                onClick = { onOperator(OP_DIVIDE) },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Operator,
+                isDark = dark,
+                fontSize = 24.sp
+            )
+        }
+
+        KeypadRow {
+            CalcKey(
+                label = "7",
+                onClick = { onDigit('7') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "8",
+                onClick = { onDigit('8') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "9",
+                onClick = { onDigit('9') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = OP_TIMES.toString(),
+                onClick = { onOperator(OP_TIMES) },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Operator,
+                isDark = dark,
+                fontSize = 24.sp
+            )
+        }
+
+        KeypadRow {
+            CalcKey(
+                label = "4",
+                onClick = { onDigit('4') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "5",
+                onClick = { onDigit('5') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "6",
+                onClick = { onDigit('6') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = OP_MINUS.toString(),
+                onClick = { onOperator(OP_MINUS) },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Operator,
+                isDark = dark,
+                fontSize = 24.sp
+            )
+        }
+
+        KeypadRow {
+            CalcKey(
+                label = "1",
+                onClick = { onDigit('1') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "2",
+                onClick = { onDigit('2') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "3",
+                onClick = { onDigit('3') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = OP_PLUS.toString(),
+                onClick = { onOperator(OP_PLUS) },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Operator,
+                isDark = dark,
+                fontSize = 24.sp
+            )
+        }
+
+        KeypadRow {
+            CalcKey(
+                label = "±",
+                onClick = onToggleSign,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Function,
+                isDark = dark,
+                fontSize = 20.sp
+            )
+            CalcKey(
+                label = "0",
+                onClick = { onDigit('0') },
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = DECIMAL.toString(),
+                onClick = onDecimal,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                isDark = dark
+            )
+            CalcKey(
+                label = "=",
+                onClick = onEquals,
+                modifier = Modifier.fillMaxHeight().weight(1f),
+                style = CalcKeyStyle.Accent,
+                isDark = dark,
+                fontSize = 26.sp
+            )
+        }
+    }
+}
+
+/* --------------------------------------------------------------------- */
+/* Memory row                                                            */
+/* --------------------------------------------------------------------- */
+
+/** M+, M−, MR and MC chips shown above the keypad. */
+@Composable
+fun MemoryBar(
+    memory: Double,
+    isDark: Boolean,
+    onMemoryAdd: () -> Unit,
+    onMemorySubtract: () -> Unit,
+    onMemoryRecall: () -> Unit,
+    onMemoryClear: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val hasMemory = memory != 0.0
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(SciGap)
+    ) {
+        MemoryChip("M+", isDark, true, onMemoryAdd, Modifier.weight(1f))
+        MemoryChip("M−", isDark, true, onMemorySubtract, Modifier.weight(1f))
+        MemoryChip("MR", isDark, hasMemory, onMemoryRecall, Modifier.weight(1f))
+        MemoryChip("MC", isDark, hasMemory, onMemoryClear, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun MemoryChip(
+    label: String,
+    isDark: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val fg = when {
+        isDark && enabled -> ForestGreenGlow
+        enabled -> ForestGreen
+        isDark -> DarkMutedText
+        else -> MutedText
+    }
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .clip(RoundedCornerShape(50))
+            .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
+            .clickable(enabled = enabled) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = fg,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
+        )
+    }
+}
+
+/* --------------------------------------------------------------------- */
+/* History sheet                                                         */
+/* --------------------------------------------------------------------- */
+
+/**
+ * Bottom sheet with every saved calculation. Tapping a row hands it back to
+ * [onSelect] so the expression can be reused.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HistorySheet(
+    entries: List<HistoryEntry>,
+    isDark: Boolean,
+    onSelect: (HistoryEntry) -> Unit,
+    onClearAll: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val titleColor = if (isDark) DarkDisplayText else DisplayText
+    val mutedColor = if (isDark) DarkMutedText else MutedText
+    val accentColor = if (isDark) ForestGreenGlow else ForestGreen
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = if (isDark) DarkForestSurface else Color.White,
+        contentColor = titleColor,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "History",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = titleColor
+                    )
+                    Text(
+                        text = if (entries.isEmpty()) {
+                            "Nothing saved yet"
+                        } else {
+                            "${entries.size} saved calculation" + if (entries.size == 1) "" else "s"
+                        },
+                        fontSize = 12.sp,
+                        color = mutedColor
+                    )
+                }
+                if (entries.isNotEmpty()) {
+                    TextButton(onClick = onClearAll) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(text = "Clear", color = accentColor, fontSize = 13.sp)
+                    }
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Close",
+                        tint = mutedColor
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            if (entries.isEmpty()) {
+                EmptyHistory(isDark = isDark)
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 360.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(entries) { entry ->
+                        HistoryRow(
+                            entry = entry,
+                            isDark = isDark,
+                            onClick = { onSelect(entry) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyHistory(isDark: Boolean) {
+    val mutedColor = if (isDark) DarkMutedText else MutedText
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "=",
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isDark) ForestGreenSoftDark else ForestGreenSoft
+        )
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = "No calculations yet",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = mutedColor
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = "Your results will appear here",
+            fontSize = 12.sp,
+            color = mutedColor
+        )
+    }
+}
+
+@Composable
+private fun HistoryRow(
+    entry: HistoryEntry,
+    isDark: Boolean,
+    onClick: () -> Unit
+) {
+    val bg = if (isDark) DarkKeySurface else KeySurface
+    val borderColor = if (isDark) DarkHairlineBorder else HairlineBorder
+    val mutedColor = if (isDark) DarkMutedText else MutedText
+    val strongColor = if (isDark) DarkDisplayText else DisplayText
+    val accentColor = if (isDark) ForestGreenGlow else ForestGreen
+    val shape = RoundedCornerShape(16.dp)
+    val time = formatTime(entry.timestamp)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(bg)
+            .border(1.dp, borderColor, shape)
+            .clickable { onClick() }
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+    ) {
+        Text(
+            text = entry.expression,
+            fontSize = 13.sp,
+            color = mutedColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(3.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "= " + entry.result,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = strongColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            if (time.isNotEmpty()) {
+                Spacer(Modifier.width(8.dp))
+                Text(text = time, fontSize = 10.sp, color = accentColor)
+            }
+        }
+    }
+}
+
+private fun formatTime(timestamp: Long): String {
+    if (timestamp <= 0L) return ""
+    return runCatching {
+        SimpleDateFormat("d MMM · HH:mm", Locale.getDefault()).format(Date(timestamp))
+    }.getOrDefault("")
+}
