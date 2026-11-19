@@ -62,29 +62,33 @@ import java.util.Locale
 
 /* --------------------------------------------------------------------- */
 /* Layout constants                                                      */
+/*                                                                       */
+/* Everything here is private to this file and carries a distinct name    */
+/* so it can never clash with a declaration in another file of the        */
+/* package (CalcComponents.kt owns the shared "Calc*" pieces).            */
 /* --------------------------------------------------------------------- */
 
 private val ScreenPadding = 16.dp
-private val PadGap = 9.dp
-private val SciGap = 6.dp
-private val KeyCorner = 22.dp
+private val PadSpacing = 9.dp
+private val SciSpacing = 6.dp
+private val KeyRadius = 22.dp
 private val MinKeyHeight = 44.dp
-private const val KeypadRows = 5
+private const val PadRowCount = 5
 
 /** Crisp white key body for digits in the light theme. */
-private val KeyWhite = Color(0xFFFFFFFF)
+private val KeyWhiteFill = Color(0xFFFFFFFF)
 
-/** Hairline around the green-tinted operator keys. */
-private val OperatorBorder = Color(0xFFD4E8DA)
-private val OperatorBorderDark = Color(0xFF2B4B36)
+/** Hairline around the green tinted operator keys. */
+private val OperatorLine = Color(0xFFD4E8DA)
+private val OperatorLineDark = Color(0xFF2B4B36)
 
 /** Soft green wash used behind the operator keys in the light theme. */
-private val OperatorSurface: Brush = Brush.verticalGradient(
+private val OperatorWash: Brush = Brush.verticalGradient(
     colors = listOf(Color(0xFFF2F9F4), Color(0xFFE4F1E8))
 )
 
 /** Night page wash built from the dark forest palette. */
-private val NightBackground: Brush = Brush.verticalGradient(
+private val NightWash: Brush = Brush.verticalGradient(
     colors = listOf(DarkForestBackground, Color(0xFF091A10), Color(0xFF0D2315))
 )
 
@@ -92,23 +96,27 @@ private val NightBackground: Brush = Brush.verticalGradient(
 /* Theme aware colour helpers                                            */
 /* --------------------------------------------------------------------- */
 
-private fun digitFill(dark: Boolean): Color = if (dark) DarkKeySurface else KeyWhite
-private fun functionFill(dark: Boolean): Color = if (dark) DarkKeySurfaceAlt else KeySurfaceAlt
-private fun hairline(dark: Boolean): Color = if (dark) DarkHairlineBorder else HairlineBorder
-private fun digitInk(dark: Boolean): Color = if (dark) DarkDisplayText else DisplayText
-private fun functionInk(dark: Boolean): Color = if (dark) ForestGreenGlow else ForestGreenDeep
-private fun mutedInk(dark: Boolean): Color = if (dark) DarkMutedText else MutedText
-private fun accentInk(dark: Boolean): Color = if (dark) ForestGreenGlow else ForestGreen
+private fun padDigitFill(dark: Boolean): Color = if (dark) DarkKeySurface else KeyWhiteFill
+private fun padFunctionFill(dark: Boolean): Color = if (dark) DarkKeySurfaceAlt else KeySurfaceAlt
+private fun padHairline(dark: Boolean): Color = if (dark) DarkHairlineBorder else HairlineBorder
+private fun padDigitInk(dark: Boolean): Color = if (dark) DarkDisplayText else DisplayText
+private fun padFunctionInk(dark: Boolean): Color = if (dark) ForestGreenGlow else ForestGreenDeep
+private fun padMutedInk(dark: Boolean): Color = if (dark) DarkMutedText else MutedText
+private fun padAccentInk(dark: Boolean): Color = if (dark) ForestGreenGlow else ForestGreen
 
 /* --------------------------------------------------------------------- */
 /* Main screen                                                           */
 /* --------------------------------------------------------------------- */
 
 /**
- * Assembles the whole Hisab experience: wordmark and toggles, the premium
+ * Assembles the whole Hisab experience: wordmark and tool chips, the premium
  * display, the memory strip, the optional scientific panel and the numeric
  * keypad. Every key gives a light haptic tick, "=" answers with a stronger
  * one and tapping the display copies the visible value.
+ *
+ * The screen only talks to [CalculatorViewModel] here; the smaller building
+ * blocks below receive plain callbacks so nothing else has to know about the
+ * view model.
  */
 @Composable
 fun CalculatorScreen(
@@ -136,7 +144,7 @@ fun CalculatorScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(if (dark) NightBackground else PremiumBackground)
+                .background(if (dark) NightWash else PremiumBackground)
         ) {
             Column(
                 modifier = Modifier
@@ -144,7 +152,7 @@ fun CalculatorScreen(
                     .systemBarsPadding()
                     .padding(horizontal = ScreenPadding, vertical = 12.dp)
             ) {
-                Header(
+                HeaderBar(
                     dark = dark,
                     scientific = state.scientific,
                     onToggleTheme = {
@@ -177,7 +185,7 @@ fun CalculatorScreen(
                         .padding(top = 8.dp)
                 )
 
-                MemoryStrip(
+                MemoryBar(
                     state = state,
                     dark = dark,
                     onRecall = {
@@ -200,19 +208,34 @@ fun CalculatorScreen(
 
                 if (state.scientific) {
                     Spacer(Modifier.height(7.dp))
-                    ScientificPanel(
+                    ScientificPad(
                         state = state,
-                        viewModel = viewModel,
                         dark = dark,
+                        onSin = { tick(); viewModel.onSin() },
+                        onCos = { tick(); viewModel.onCos() },
+                        onTan = { tick(); viewModel.onTan() },
+                        onLn = { tick(); viewModel.onLn() },
+                        onSqrt = { tick(); viewModel.onSqrt() },
+                        onSquare = { tick(); viewModel.onSquare() },
+                        onPi = { tick(); viewModel.onPi() },
+                        onOpenParen = { tick(); viewModel.onOpenParen() },
+                        onCloseParen = { tick(); viewModel.onCloseParen() },
+                        onToggleDegrees = { tick(); viewModel.onToggleDegrees() },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                Spacer(Modifier.height(PadGap))
+                Spacer(Modifier.height(PadSpacing))
 
-                NumericKeypad(
+                NumericPad(
                     dark = dark,
-                    viewModel = viewModel,
+                    onDigit = { digit -> tick(); viewModel.onDigit(digit) },
+                    onDecimal = { tick(); viewModel.onDecimal() },
+                    onOperator = { symbol -> tick(); viewModel.onOperator(symbol) },
+                    onClear = { tick(); viewModel.onClear() },
+                    onToggleSign = { tick(); viewModel.onToggleSign() },
+                    onPercent = { tick(); viewModel.onPercent() },
+                    onEquals = { tick(); viewModel.onEquals() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(if (state.scientific) 1.35f else 1.75f)
@@ -220,7 +243,7 @@ fun CalculatorScreen(
             }
 
             if (historyOpen) {
-                HistorySheet(
+                HistoryOverlay(
                     history = state.history,
                     dark = dark,
                     onDismiss = { historyOpen = false },
@@ -240,7 +263,7 @@ fun CalculatorScreen(
 /* --------------------------------------------------------------------- */
 
 @Composable
-private fun Header(
+private fun HeaderBar(
     dark: Boolean,
     scientific: Boolean,
     onToggleTheme: () -> Unit,
@@ -248,7 +271,7 @@ private fun Header(
     onOpenHistory: () -> Unit
 ) {
     val ink = if (dark) DarkDisplayText else ForestGreenDeep
-    val accent = accentInk(dark)
+    val accent = padAccentInk(dark)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -269,7 +292,7 @@ private fun Header(
             letterSpacing = 0.4.sp
         )
         Spacer(Modifier.weight(1f))
-        ToolChip(active = scientific, dark = dark, onClick = onToggleScientific) {
+        ToolChipButton(active = scientific, dark = dark, onClick = onToggleScientific) {
             Text(
                 text = "fx",
                 color = if (scientific) Color.White else accent,
@@ -278,7 +301,7 @@ private fun Header(
             )
         }
         Spacer(Modifier.width(7.dp))
-        ToolChip(dark = dark, onClick = onOpenHistory) {
+        ToolChipButton(dark = dark, onClick = onOpenHistory) {
             Text(
                 text = "≡",
                 color = accent,
@@ -287,11 +310,11 @@ private fun Header(
             )
         }
         Spacer(Modifier.width(7.dp))
-        ToolChip(dark = dark, onClick = onToggleTheme) {
-            ThemeGlyph(
+        ToolChipButton(dark = dark, onClick = onToggleTheme) {
+            ThemeGlyphIcon(
                 dark = dark,
                 tint = accent,
-                bite = if (dark) DarkKeySurface else KeyWhite,
+                bite = if (dark) DarkKeySurface else KeyWhiteFill,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -299,7 +322,7 @@ private fun Header(
 }
 
 @Composable
-private fun ToolChip(
+private fun ToolChipButton(
     dark: Boolean,
     onClick: () -> Unit,
     active: Boolean = false,
@@ -312,9 +335,9 @@ private fun ToolChip(
             .clip(shape)
             .then(
                 if (active) Modifier.background(AccentGradient)
-                else Modifier.background(if (dark) DarkKeySurface else KeyWhite)
+                else Modifier.background(if (dark) DarkKeySurface else KeyWhiteFill)
             )
-            .border(1.dp, if (active) Color.Transparent else hairline(dark), shape)
+            .border(1.dp, if (active) Color.Transparent else padHairline(dark), shape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -325,10 +348,10 @@ private fun ToolChip(
 /**
  * Tiny hand drawn sun / moon so the theme toggle stays dependency free.
  * In the light theme it shows a crescent (switch to dark), in the dark
- * theme a sun (switch back to light).
+ * theme a sun with rays (switch back to light).
  */
 @Composable
-private fun ThemeGlyph(
+private fun ThemeGlyphIcon(
     dark: Boolean,
     tint: Color,
     bite: Color,
@@ -361,7 +384,7 @@ private fun ThemeGlyph(
 /* --------------------------------------------------------------------- */
 
 @Composable
-private fun MemoryStrip(
+private fun MemoryBar(
     state: CalculatorUiState,
     dark: Boolean,
     onRecall: () -> Unit,
@@ -378,14 +401,14 @@ private fun MemoryStrip(
         horizontalArrangement = Arrangement.spacedBy(7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MemoryChip("MC", dark, enabled = stored, onClick = onClear)
-        MemoryChip("MR", dark, enabled = stored, onClick = onRecall)
-        MemoryChip("M+", dark, onClick = onAdd)
-        MemoryChip("M−", dark, onClick = onSubtract)
+        MemoryChipButton("MC", dark, enabled = stored, onClick = onClear)
+        MemoryChipButton("MR", dark, enabled = stored, onClick = onRecall)
+        MemoryChipButton("M+", dark, onClick = onAdd)
+        MemoryChipButton("M−", dark, onClick = onSubtract)
         if (stored) {
             Text(
                 text = state.memoryText,
-                color = accentInk(dark),
+                color = padAccentInk(dark),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -398,7 +421,7 @@ private fun MemoryStrip(
 }
 
 @Composable
-private fun MemoryChip(
+private fun MemoryChipButton(
     label: String,
     dark: Boolean,
     enabled: Boolean = true,
@@ -409,15 +432,15 @@ private fun MemoryChip(
         modifier = Modifier
             .height(28.dp)
             .clip(shape)
-            .background(if (dark) DarkKeySurface else KeyWhite)
-            .border(1.dp, hairline(dark), shape)
+            .background(if (dark) DarkKeySurface else KeyWhiteFill)
+            .border(1.dp, padHairline(dark), shape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 11.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            color = accentInk(dark).copy(alpha = if (enabled) 1f else 0.35f),
+            color = padAccentInk(dark).copy(alpha = if (enabled) 1f else 0.35f),
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -431,53 +454,58 @@ private fun MemoryChip(
 /* --------------------------------------------------------------------- */
 
 @Composable
-private fun ScientificPanel(
+private fun ScientificPad(
     state: CalculatorUiState,
-    viewModel: CalculatorViewModel,
     dark: Boolean,
+    onSin: () -> Unit,
+    onCos: () -> Unit,
+    onTan: () -> Unit,
+    onLn: () -> Unit,
+    onSqrt: () -> Unit,
+    onSquare: () -> Unit,
+    onPi: () -> Unit,
+    onOpenParen: () -> Unit,
+    onCloseParen: () -> Unit,
+    onToggleDegrees: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val haptics = LocalHapticFeedback.current
-    val tick: () -> Unit = {
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-    }
-
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(SciGap)
+        verticalArrangement = Arrangement.spacedBy(SciSpacing)
     ) {
-        SciRow {
-            SciButton("sin", dark) { tick(); viewModel.onSin() }
-            SciButton("cos", dark) { tick(); viewModel.onCos() }
-            SciButton("tan", dark) { tick(); viewModel.onTan() }
-            SciButton("ln", dark) { tick(); viewModel.onLn() }
-            SciButton("√", dark) { tick(); viewModel.onSqrt() }
+        SciPadRow {
+            SciKeyButton("sin", dark, onClick = onSin)
+            SciKeyButton("cos", dark, onClick = onCos)
+            SciKeyButton("tan", dark, onClick = onTan)
+            SciKeyButton("ln", dark, onClick = onLn)
+            SciKeyButton("√", dark, onClick = onSqrt)
         }
-        SciRow {
-            SciButton("x²", dark) { tick(); viewModel.onSquare() }
-            SciButton("π", dark) { tick(); viewModel.onPi() }
-            SciButton("(", dark) { tick(); viewModel.onOpenParen() }
-            SciButton(")", dark) { tick(); viewModel.onCloseParen() }
-            SciButton(
+        SciPadRow {
+            SciKeyButton("x2", dark, onClick = onSquare)
+            SciKeyButton("π", dark, onClick = onPi)
+            SciKeyButton("(", dark, onClick = onOpenParen)
+            SciKeyButton(")", dark, onClick = onCloseParen)
+            SciKeyButton(
                 label = if (state.degrees) "DEG" else "RAD",
                 dark = dark,
-                active = true
-            ) { tick(); viewModel.onToggleDegrees() }
+                active = true,
+                onClick = onToggleDegrees
+            )
         }
     }
 }
 
 @Composable
-private fun SciRow(content: @Composable RowScope.() -> Unit) {
+private fun SciPadRow(content: @Composable RowScope.() -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(SciGap),
+        horizontalArrangement = Arrangement.spacedBy(SciSpacing),
         content = content
     )
 }
 
 @Composable
-private fun RowScope.SciButton(
+private fun RowScope.SciKeyButton(
     label: String,
     dark: Boolean,
     active: Boolean = false,
@@ -487,15 +515,15 @@ private fun RowScope.SciButton(
     val fill = when {
         active -> if (dark) ForestGreenSoftDark else ForestGreenSoft
         dark -> DarkKeySurface
-        else -> KeyWhite
+        else -> KeyWhiteFill
     }
     val ink = when {
-        active -> accentInk(dark)
-        else -> mutedInk(dark)
+        active -> padAccentInk(dark)
+        else -> padMutedInk(dark)
     }
     val stroke = when {
-        active -> accentInk(dark).copy(alpha = 0.35f)
-        else -> hairline(dark)
+        active -> padAccentInk(dark).copy(alpha = 0.35f)
+        else -> padHairline(dark)
     }
 
     Box(
@@ -526,84 +554,70 @@ private fun RowScope.SciButton(
 /* --------------------------------------------------------------------- */
 
 @Composable
-private fun NumericKeypad(
+private fun NumericPad(
     dark: Boolean,
-    viewModel: CalculatorViewModel,
+    onDigit: (Char) -> Unit,
+    onDecimal: () -> Unit,
+    onOperator: (Char) -> Unit,
+    onClear: () -> Unit,
+    onToggleSign: () -> Unit,
+    onPercent: () -> Unit,
+    onEquals: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val haptics = LocalHapticFeedback.current
-    val tick: () -> Unit = {
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-    }
-
     BoxWithConstraints(modifier = modifier) {
-        val rowHeight = ((maxHeight - PadGap * (KeypadRows - 1)) / KeypadRows)
+        val rowHeight = ((maxHeight - PadSpacing * (PadRowCount - 1)) / PadRowCount)
             .coerceAtLeast(MinKeyHeight)
 
         Column(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(PadGap)
+            verticalArrangement = Arrangement.spacedBy(PadSpacing)
         ) {
-            KeyRow(rowHeight) {
-                FunctionButton("C", 22.sp, dark) { tick(); viewModel.onClear() }
-                FunctionButton("±", 22.sp, dark) { tick(); viewModel.onToggleSign() }
-                FunctionButton("%", 20.sp, dark) { tick(); viewModel.onPercent() }
-                OperatorButton(OP_DIVIDE.toString(), dark) {
-                    tick()
-                    viewModel.onOperator(OP_DIVIDE)
-                }
+            PadRow(rowHeight) {
+                FunctionKey("C", 22.sp, dark, onClick = onClear)
+                FunctionKey("±", 22.sp, dark, onClick = onToggleSign)
+                FunctionKey("%", 20.sp, dark, onClick = onPercent)
+                OperatorKey(OP_DIVIDE.toString(), dark) { onOperator(OP_DIVIDE) }
             }
 
-            KeyRow(rowHeight) {
-                DigitButton("7", dark) { tick(); viewModel.onDigit('7') }
-                DigitButton("8", dark) { tick(); viewModel.onDigit('8') }
-                DigitButton("9", dark) { tick(); viewModel.onDigit('9') }
-                OperatorButton(OP_TIMES.toString(), dark) {
-                    tick()
-                    viewModel.onOperator(OP_TIMES)
-                }
+            PadRow(rowHeight) {
+                DigitKey("7", dark) { onDigit('7') }
+                DigitKey("8", dark) { onDigit('8') }
+                DigitKey("9", dark) { onDigit('9') }
+                OperatorKey(OP_TIMES.toString(), dark) { onOperator(OP_TIMES) }
             }
 
-            KeyRow(rowHeight) {
-                DigitButton("4", dark) { tick(); viewModel.onDigit('4') }
-                DigitButton("5", dark) { tick(); viewModel.onDigit('5') }
-                DigitButton("6", dark) { tick(); viewModel.onDigit('6') }
-                OperatorButton(OP_MINUS.toString(), dark) {
-                    tick()
-                    viewModel.onOperator(OP_MINUS)
-                }
+            PadRow(rowHeight) {
+                DigitKey("4", dark) { onDigit('4') }
+                DigitKey("5", dark) { onDigit('5') }
+                DigitKey("6", dark) { onDigit('6') }
+                OperatorKey(OP_MINUS.toString(), dark) { onOperator(OP_MINUS) }
             }
 
-            KeyRow(rowHeight) {
-                DigitButton("1", dark) { tick(); viewModel.onDigit('1') }
-                DigitButton("2", dark) { tick(); viewModel.onDigit('2') }
-                DigitButton("3", dark) { tick(); viewModel.onDigit('3') }
-                OperatorButton(OP_PLUS.toString(), dark) {
-                    tick()
-                    viewModel.onOperator(OP_PLUS)
-                }
+            PadRow(rowHeight) {
+                DigitKey("1", dark) { onDigit('1') }
+                DigitKey("2", dark) { onDigit('2') }
+                DigitKey("3", dark) { onDigit('3') }
+                OperatorKey(OP_PLUS.toString(), dark) { onOperator(OP_PLUS) }
             }
 
-            KeyRow(rowHeight) {
-                DigitButton("0", dark, weight = 2f) { tick(); viewModel.onDigit('0') }
-                KeyButton(
+            PadRow(rowHeight) {
+                DigitKey("0", dark, weight = 2f) { onDigit('0') }
+                KeyCap(
                     label = DECIMAL.toString(),
-                    onClick = { tick(); viewModel.onDecimal() },
+                    onClick = onDecimal,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
-                    container = digitFill(dark),
-                    content = digitInk(dark),
-                    borderColor = hairline(dark),
+                    container = padDigitFill(dark),
+                    content = padDigitInk(dark),
+                    borderColor = padHairline(dark),
                     elevation = if (dark) 0.dp else 2.dp,
                     fontSize = 26.sp
                 )
-                KeyButton(
+                KeyCap(
                     label = "=",
-                    onClick = {
-                        tick()
-                        viewModel.onEquals()
-                    },
+                    onClick = onEquals,
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight(),
@@ -620,7 +634,7 @@ private fun NumericKeypad(
 }
 
 @Composable
-private fun KeyRow(
+private fun PadRow(
     rowHeight: Dp,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -628,49 +642,49 @@ private fun KeyRow(
         modifier = Modifier
             .fillMaxWidth()
             .height(rowHeight),
-        horizontalArrangement = Arrangement.spacedBy(PadGap),
+        horizontalArrangement = Arrangement.spacedBy(PadSpacing),
         verticalAlignment = Alignment.CenterVertically,
         content = content
     )
 }
 
 @Composable
-private fun RowScope.DigitButton(
+private fun RowScope.DigitKey(
     digit: String,
     dark: Boolean,
     weight: Float = 1f,
     onClick: () -> Unit
 ) {
-    KeyButton(
+    KeyCap(
         label = digit,
         onClick = onClick,
         modifier = Modifier
             .weight(weight)
             .fillMaxHeight(),
-        container = digitFill(dark),
-        content = digitInk(dark),
-        borderColor = hairline(dark),
+        container = padDigitFill(dark),
+        content = padDigitInk(dark),
+        borderColor = padHairline(dark),
         elevation = if (dark) 0.dp else 2.dp,
         fontSize = 26.sp
     )
 }
 
 @Composable
-private fun RowScope.FunctionButton(
+private fun RowScope.FunctionKey(
     label: String,
     fontSize: TextUnit,
     dark: Boolean,
     onClick: () -> Unit
 ) {
-    KeyButton(
+    KeyCap(
         label = label,
         onClick = onClick,
         modifier = Modifier
             .weight(1f)
             .fillMaxHeight(),
-        container = functionFill(dark),
-        content = functionInk(dark),
-        borderColor = hairline(dark),
+        container = padFunctionFill(dark),
+        content = padFunctionInk(dark),
+        borderColor = padHairline(dark),
         elevation = if (dark) 0.dp else 1.dp,
         fontSize = fontSize,
         fontWeight = FontWeight.Medium
@@ -678,13 +692,13 @@ private fun RowScope.FunctionButton(
 }
 
 @Composable
-private fun RowScope.OperatorButton(
+private fun RowScope.OperatorKey(
     label: String,
     dark: Boolean,
     onClick: () -> Unit
 ) {
     if (dark) {
-        KeyButton(
+        KeyCap(
             label = label,
             onClick = onClick,
             modifier = Modifier
@@ -692,21 +706,21 @@ private fun RowScope.OperatorButton(
                 .fillMaxHeight(),
             container = ForestGreenSoftDark,
             content = ForestGreenGlow,
-            borderColor = OperatorBorderDark,
+            borderColor = OperatorLineDark,
             elevation = 0.dp,
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium
         )
     } else {
-        KeyButton(
+        KeyCap(
             label = label,
             onClick = onClick,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight(),
-            brush = OperatorSurface,
+            brush = OperatorWash,
             content = ForestGreen,
-            borderColor = OperatorBorder,
+            borderColor = OperatorLine,
             elevation = 2.dp,
             fontSize = 28.sp,
             fontWeight = FontWeight.Medium
@@ -719,11 +733,11 @@ private fun RowScope.OperatorButton(
  * colour or a gradient fill.
  */
 @Composable
-private fun KeyButton(
+private fun KeyCap(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    container: Color = KeyWhite,
+    container: Color = KeyWhiteFill,
     brush: Brush? = null,
     content: Color = DisplayText,
     borderColor: Color = HairlineBorder,
@@ -731,7 +745,7 @@ private fun KeyButton(
     fontSize: TextUnit = 26.sp,
     fontWeight: FontWeight = FontWeight.Normal
 ) {
-    val shape = RoundedCornerShape(KeyCorner)
+    val shape = RoundedCornerShape(KeyRadius)
     Box(
         modifier = modifier
             .shadow(elevation, shape)
@@ -763,7 +777,7 @@ private fun KeyButton(
 /* --------------------------------------------------------------------- */
 
 @Composable
-private fun HistorySheet(
+private fun HistoryOverlay(
     history: List<HistoryEntry>,
     dark: Boolean,
     onDismiss: () -> Unit,
@@ -771,7 +785,7 @@ private fun HistorySheet(
     onSelect: (HistoryEntry) -> Unit
 ) {
     val ink = if (dark) DarkDisplayText else DisplayText
-    val mute = mutedInk(dark)
+    val mute = padMutedInk(dark)
     val panelColor = if (dark) DarkForestSurface else Color.White
     val scrimInteraction = remember { MutableInteractionSource() }
 
@@ -811,7 +825,7 @@ private fun HistorySheet(
                 if (history.isNotEmpty()) {
                     Text(
                         text = "Clear",
-                        color = accentInk(dark),
+                        color = padAccentInk(dark),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
@@ -853,7 +867,7 @@ private fun HistorySheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(history) { entry ->
-                        HistoryCard(
+                        HistoryRow(
                             entry = entry,
                             dark = dark,
                             onClick = { onSelect(entry) }
@@ -866,13 +880,13 @@ private fun HistorySheet(
 }
 
 @Composable
-private fun HistoryCard(
+private fun HistoryRow(
     entry: HistoryEntry,
     dark: Boolean,
     onClick: () -> Unit
 ) {
-    val mute = mutedInk(dark)
-    val stamp = remember(entry.timestamp) { historyStamp(entry.timestamp) }
+    val mute = padMutedInk(dark)
+    val stamp = remember(entry.timestamp) { formatHistoryStamp(entry.timestamp) }
 
     Column(
         modifier = Modifier
@@ -892,7 +906,7 @@ private fun HistoryCard(
         Spacer(Modifier.height(2.dp))
         Text(
             text = entry.result,
-            color = accentInk(dark),
+            color = padAccentInk(dark),
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -911,7 +925,7 @@ private fun HistoryCard(
 }
 
 /** Friendly stamp for a saved calculation, empty when there is no time. */
-private fun historyStamp(timestamp: Long): String {
+private fun formatHistoryStamp(timestamp: Long): String {
     if (timestamp <= 0L) return ""
     val format = SimpleDateFormat("d MMM · h:mm a", Locale.getDefault())
     return format.format(Date(timestamp))

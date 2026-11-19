@@ -1,5 +1,6 @@
 package com.vibecraft.generated
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -49,12 +51,15 @@ import java.util.Locale
 
 /* --------------------------------------------------------------------- */
 /* Shared metrics                                                        */
+/*                                                                       */
+/* Every top level helper in this file carries the "Calc" prefix so it    */
+/* can never clash with a declaration in another file of the package.     */
 /* --------------------------------------------------------------------- */
 
-private val KeyGap = 8.dp
-private val SciGap = 6.dp
-private val KeyShape = RoundedCornerShape(18.dp)
-private val SciShape = RoundedCornerShape(12.dp)
+private val CalcKeyGap = 8.dp
+private val CalcSciGap = 6.dp
+private val CalcBigKeyShape = RoundedCornerShape(18.dp)
+private val CalcSciChipShape = RoundedCornerShape(12.dp)
 
 /** Visual families used by [CalcKey]. */
 enum class CalcKeyStyle { Digit, Function, Operator, Accent }
@@ -101,11 +106,11 @@ fun CalculatorDisplay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (state.hasMemory) {
-                MemoryBadge(text = state.memoryText, dark = dark)
+                CalcMemoryBadge(text = state.memoryText, dark = dark)
             }
             Spacer(Modifier.weight(1f))
             if (state.scientific) {
-                AngleBadge(degrees = state.degrees, dark = dark)
+                CalcAngleBadge(degrees = state.degrees, dark = dark)
             }
         }
 
@@ -136,7 +141,7 @@ fun CalculatorDisplay(
             Text(
                 text = state.primaryText,
                 color = primaryColor,
-                fontSize = displayFontSize(state.primaryText),
+                fontSize = calcDisplayFontSize(state.primaryText),
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = FontFamily.SansSerif,
                 letterSpacing = (-0.5).sp,
@@ -146,7 +151,7 @@ fun CalculatorDisplay(
     }
 }
 
-private fun displayFontSize(text: String): TextUnit = when {
+private fun calcDisplayFontSize(text: String): TextUnit = when {
     text.length <= 9 -> 44.sp
     text.length <= 13 -> 34.sp
     text.length <= 18 -> 26.sp
@@ -154,7 +159,7 @@ private fun displayFontSize(text: String): TextUnit = when {
 }
 
 @Composable
-private fun MemoryBadge(text: String, dark: Boolean) {
+private fun CalcMemoryBadge(text: String, dark: Boolean) {
     val bg = if (dark) ForestGreenSoftDark else ForestGreenSoft
     val fg = if (dark) ForestGreenGlow else ForestGreen
     Row(
@@ -177,7 +182,7 @@ private fun MemoryBadge(text: String, dark: Boolean) {
 }
 
 @Composable
-private fun AngleBadge(degrees: Boolean, dark: Boolean) {
+private fun CalcAngleBadge(degrees: Boolean, dark: Boolean) {
     val bg = if (dark) DarkKeySurfaceAlt else KeySurfaceAlt
     val fg = if (dark) ForestGreenGlow else ForestGreenRich
     Text(
@@ -212,10 +217,10 @@ fun ScientificPanel(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SciGap)
+        verticalArrangement = Arrangement.spacedBy(CalcSciGap)
     ) {
-        SciRow {
-            SciChip(
+        CalcSciRow {
+            CalcSciChip(
                 label = if (degrees) "DEG" else "RAD",
                 highlighted = true,
                 isDark = isDark,
@@ -224,46 +229,46 @@ fun ScientificPanel(
                     .fillMaxHeight()
                     .weight(1f)
             )
-            SciKey("sin", isDark, onFunction)
-            SciKey("cos", isDark, onFunction)
-            SciKey("tan", isDark, onFunction)
+            CalcSciKey("sin", isDark, onFunction)
+            CalcSciKey("cos", isDark, onFunction)
+            CalcSciKey("tan", isDark, onFunction)
         }
 
-        SciRow {
-            SciKey("ln", isDark, onFunction)
-            SciKey("log", isDark, onFunction)
-            SciKey("√", isDark, onFunction)
-            SciKey("x2", isDark, onFunction)
+        CalcSciRow {
+            CalcSciKey("ln", isDark, onFunction)
+            CalcSciKey("log", isDark, onFunction)
+            CalcSciKey("√", isDark, onFunction)
+            CalcSciKey("x2", isDark, onFunction)
         }
 
-        SciRow {
-            SciKey("π", isDark, onFunction)
-            SciKey("e", isDark, onFunction)
-            SciKey("(", isDark, onFunction)
-            SciKey(")", isDark, onFunction)
+        CalcSciRow {
+            CalcSciKey("π", isDark, onFunction)
+            CalcSciKey("e", isDark, onFunction)
+            CalcSciKey("(", isDark, onFunction)
+            CalcSciKey(")", isDark, onFunction)
         }
     }
 }
 
 @Composable
-private fun SciRow(content: @Composable RowScope.() -> Unit) {
+private fun CalcSciRow(content: @Composable RowScope.() -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(38.dp),
-        horizontalArrangement = Arrangement.spacedBy(SciGap),
+        horizontalArrangement = Arrangement.spacedBy(CalcSciGap),
         verticalAlignment = Alignment.CenterVertically,
         content = content
     )
 }
 
 @Composable
-private fun RowScope.SciKey(
+private fun RowScope.CalcSciKey(
     label: String,
     isDark: Boolean,
     onFunction: (String) -> Unit
 ) {
-    SciChip(
+    CalcSciChip(
         label = label,
         highlighted = false,
         isDark = isDark,
@@ -275,7 +280,7 @@ private fun RowScope.SciKey(
 }
 
 @Composable
-private fun SciChip(
+private fun CalcSciChip(
     label: String,
     highlighted: Boolean,
     isDark: Boolean,
@@ -293,9 +298,9 @@ private fun SciChip(
 
     Box(
         modifier = modifier
-            .clip(SciShape)
+            .clip(CalcSciChipShape)
             .background(bg)
-            .border(1.dp, borderColor, SciShape)
+            .border(1.dp, borderColor, CalcSciChipShape)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -329,24 +334,24 @@ fun CalcKey(
 ) {
     val container = when (style) {
         CalcKeyStyle.Accent -> modifier
-            .clip(KeyShape)
+            .clip(CalcBigKeyShape)
             .background(AccentGradient)
 
         CalcKeyStyle.Operator -> modifier
-            .clip(KeyShape)
+            .clip(CalcBigKeyShape)
             .background(if (isDark) ForestGreenSoftDark else ForestGreenSoft)
 
         CalcKeyStyle.Function -> modifier
-            .clip(KeyShape)
+            .clip(CalcBigKeyShape)
             .background(if (isDark) DarkKeySurfaceAlt else KeySurfaceAlt)
 
         CalcKeyStyle.Digit -> modifier
-            .clip(KeyShape)
+            .clip(CalcBigKeyShape)
             .background(if (isDark) DarkKeySurface else KeySurface)
             .border(
                 width = 1.dp,
                 color = if (isDark) DarkHairlineBorder else HairlineBorder,
-                shape = KeyShape
+                shape = CalcBigKeyShape
             )
     }
 
@@ -362,10 +367,10 @@ fun CalcKey(
         contentAlignment = Alignment.Center
     ) {
         if (icon != null) {
-            androidx.compose.foundation.Image(
+            Image(
                 imageVector = icon,
                 contentDescription = label,
-                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(textColor),
+                colorFilter = ColorFilter.tint(textColor),
                 modifier = Modifier.size(22.dp)
             )
         } else {
@@ -385,12 +390,12 @@ fun CalcKey(
 }
 
 @Composable
-private fun ColumnScope.KeypadRow(content: @Composable RowScope.() -> Unit) {
+private fun ColumnScope.CalcKeypadRow(content: @Composable RowScope.() -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f),
-        horizontalArrangement = Arrangement.spacedBy(KeyGap),
+        horizontalArrangement = Arrangement.spacedBy(CalcKeyGap),
         verticalAlignment = Alignment.CenterVertically,
         content = content
     )
@@ -414,9 +419,9 @@ fun CalculatorKeypad(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(KeyGap)
+        verticalArrangement = Arrangement.spacedBy(CalcKeyGap)
     ) {
-        KeypadRow {
+        CalcKeypadRow {
             CalcKey(
                 label = "AC",
                 onClick = onClear,
@@ -451,7 +456,7 @@ fun CalculatorKeypad(
             )
         }
 
-        KeypadRow {
+        CalcKeypadRow {
             CalcKey(
                 label = "7",
                 onClick = { onDigit('7') },
@@ -480,7 +485,7 @@ fun CalculatorKeypad(
             )
         }
 
-        KeypadRow {
+        CalcKeypadRow {
             CalcKey(
                 label = "4",
                 onClick = { onDigit('4') },
@@ -509,7 +514,7 @@ fun CalculatorKeypad(
             )
         }
 
-        KeypadRow {
+        CalcKeypadRow {
             CalcKey(
                 label = "1",
                 onClick = { onDigit('1') },
@@ -538,7 +543,7 @@ fun CalculatorKeypad(
             )
         }
 
-        KeypadRow {
+        CalcKeypadRow {
             CalcKey(
                 label = "±",
                 onClick = onToggleSign,
@@ -589,30 +594,30 @@ fun MemoryBar(
     val hasMemory = memory != 0.0
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(SciGap)
+        horizontalArrangement = Arrangement.spacedBy(CalcSciGap)
     ) {
-        MemoryChip(
+        CalcMemoryChip(
             label = "M+",
             isDark = isDark,
             enabled = true,
             onClick = onMemoryAdd,
             modifier = Modifier.weight(1f)
         )
-        MemoryChip(
+        CalcMemoryChip(
             label = "M−",
             isDark = isDark,
             enabled = true,
             onClick = onMemorySubtract,
             modifier = Modifier.weight(1f)
         )
-        MemoryChip(
+        CalcMemoryChip(
             label = "MR",
             isDark = isDark,
             enabled = hasMemory,
             onClick = onMemoryRecall,
             modifier = Modifier.weight(1f)
         )
-        MemoryChip(
+        CalcMemoryChip(
             label = "MC",
             isDark = isDark,
             enabled = hasMemory,
@@ -623,7 +628,7 @@ fun MemoryBar(
 }
 
 @Composable
-private fun MemoryChip(
+private fun CalcMemoryChip(
     label: String,
     isDark: Boolean,
     enabled: Boolean,
@@ -745,7 +750,7 @@ fun HistorySheet(
                 Spacer(Modifier.height(12.dp))
 
                 if (entries.isEmpty()) {
-                    EmptyHistory(isDark = isDark)
+                    CalcEmptyHistory(isDark = isDark)
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -754,7 +759,7 @@ fun HistorySheet(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(entries) { entry ->
-                            HistoryRow(
+                            CalcHistoryRow(
                                 entry = entry,
                                 isDark = isDark,
                                 onClick = { onSelect(entry) }
@@ -768,7 +773,7 @@ fun HistorySheet(
 }
 
 @Composable
-private fun EmptyHistory(isDark: Boolean) {
+private fun CalcEmptyHistory(isDark: Boolean) {
     val mutedColor = if (isDark) DarkMutedText else MutedText
     Column(
         modifier = Modifier
@@ -799,7 +804,7 @@ private fun EmptyHistory(isDark: Boolean) {
 }
 
 @Composable
-private fun HistoryRow(
+private fun CalcHistoryRow(
     entry: HistoryEntry,
     isDark: Boolean,
     onClick: () -> Unit
@@ -810,7 +815,7 @@ private fun HistoryRow(
     val strongColor = if (isDark) DarkDisplayText else DisplayText
     val accentColor = if (isDark) ForestGreenGlow else ForestGreen
     val shape = RoundedCornerShape(16.dp)
-    val time = formatTime(entry.timestamp)
+    val time = calcFormatTime(entry.timestamp)
 
     Column(
         modifier = Modifier
@@ -847,7 +852,7 @@ private fun HistoryRow(
     }
 }
 
-private fun formatTime(timestamp: Long): String {
+private fun calcFormatTime(timestamp: Long): String {
     if (timestamp <= 0L) return ""
     return runCatching {
         SimpleDateFormat("d MMM · HH:mm", Locale.getDefault()).format(Date(timestamp))

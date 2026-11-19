@@ -38,6 +38,8 @@ private const val MAX_HISTORY: Int = 100
 private const val MINUS_TEXT: String = "−"
 private const val ERROR_TEXT: String = "Error"
 private const val EULER_VALUE: Double = 2.718281828459045
+private const val OPEN_PAREN: Char = '('
+private const val CLOSE_PAREN: Char = ')'
 
 /**
  * Everything the calculator screen needs to draw itself.
@@ -90,17 +92,20 @@ data class CalculatorUiState(
 /* View model                                                            */
 /* --------------------------------------------------------------------- */
 
-class CalculatorViewModel : ViewModel() {
-
-    /** Optional convenience constructor for screens that already have a Context. */
-    constructor(context: Context) : this() {
-        attach(context)
-    }
+class CalculatorViewModel @JvmOverloads constructor(
+    context: Context? = null
+) : ViewModel() {
 
     private var store: HistoryStore? = null
 
     private val _uiState = MutableStateFlow(CalculatorUiState())
     val uiState: StateFlow<CalculatorUiState> = _uiState.asStateFlow()
+
+    init {
+        if (context != null) {
+            attach(context)
+        }
+    }
 
     /* --------------------------- persistence -------------------------- */
 
@@ -124,7 +129,8 @@ class CalculatorViewModel : ViewModel() {
     fun onDigit(digit: Char) {
         if (!digit.isDigit()) return
         val current = _uiState.value
-        val base = if (current.showingResult || current.hasError) "" else current.expression
+        val raw = if (current.showingResult || current.hasError) "" else current.expression
+        val base = startFreshFactor(raw)
         val start = trailingNumberStart(base)
         val trailing = base.substring(start)
 
@@ -138,7 +144,8 @@ class CalculatorViewModel : ViewModel() {
 
     fun onDecimal() {
         val current = _uiState.value
-        val base = if (current.showingResult || current.hasError) "" else current.expression
+        val raw = if (current.showingResult || current.hasError) "" else current.expression
+        val base = startFreshFactor(raw)
         val start = trailingNumberStart(base)
         val trailing = base.substring(start)
 
@@ -158,6 +165,8 @@ class CalculatorViewModel : ViewModel() {
         val next: String = when {
             base.isEmpty() || base == MINUS_TEXT ->
                 if (symbol == OP_MINUS) MINUS_TEXT else ""
+            base[base.length - 1] == OPEN_PAREN ->
+                if (symbol == OP_MINUS) base + MINUS_TEXT else base
             isBinaryOperator(base[base.length - 1]) ->
                 base.substring(0, base.length - 1) + symbol
             base[base.length - 1] == DECIMAL ->
@@ -172,7 +181,7 @@ class CalculatorViewModel : ViewModel() {
         val base = if (current.hasError) "" else current.expression
         if (base.isEmpty()) return
         val last = base[base.length - 1]
-        if (!(last.isDigit() || last == OP_PERCENT)) return
+        if (!(last.isDigit() || last == OP_PERCENT || last == CLOSE_PAREN)) return
         applyExpression(base + OP_PERCENT)
     }
 
@@ -188,7 +197,8 @@ class CalculatorViewModel : ViewModel() {
         val minusIndex = numberStart - 1
         val alreadyNegated = minusIndex >= 0 &&
             expression[minusIndex] == OP_MINUS &&
-            (minusIndex == 0 || isBinaryOperator(expression[minusIndex - 1]))
+            (minusIndex == 0 || isBinaryOperator(expression[minusIndex - 1]) ||
+                expression[minusIndex - 1] == OPEN_PAREN)
 
         val next: String = if (alreadyNegated) {
             expression.substring(0, minusIndex) + expression.substring(numberStart)
@@ -228,6 +238,18 @@ class CalculatorViewModel : ViewModel() {
             expression = expression.substring(0, expression.length - 1)
         }
         if (expression.isEmpty()) return
+        if (expression[expression.length - 1] == OPEN_PAREN) return
+
+        val missing = expression.count { it == OPEN_PAREN } - expression.count { it == CLOSE_PAREN }
+        if (missing > 0) {
+            val builder = StringBuilder(expression)
+            var added = 0
+            while (added < missing) {
+                builder.append(CLOSE_PAREN)
+                added++
+            }
+            expression = builder.toString()
+        }
 
         val value = ExpressionEvaluator.evaluate(expression)
         if (value == null) {
@@ -260,6 +282,39 @@ class CalculatorViewModel : ViewModel() {
             showingResult = true,
             history = history
         )
+    }
+
+    /* ---------------------------- brackets ---------------------------- */
+
+    fun onOpenParen() {
+        val current = _uiState.value
+        val raw = if (current.showingResult || current.hasError) "" else current.expression
+        val next: String = if (raw.isEmpty()) {
+            "" + OPEN_PAREN
+        } else {
+            val last = raw[raw.length - 1]
+            if (last.isDigit() || last == CLOSE_PAREN) {
+                raw + OP_TIMES + OPEN_PAREN
+            } else {
+                raw + OPEN_PAREN
+            }
+        }
+        applyExpression(next)
+    }
+
+    fun onCloseParen() {
+        val current = _uiState.value
+        if (current.hasError || current.showingResult) return
+        val expression = current.expression
+        if (expression.isEmpty()) return
+
+        val open = expression.count { it == OPEN_PAREN }
+        val close = expression.count { it == CLOSE_PAREN }
+        if (close >= open) return
+
+        val last = expression[expression.length - 1]
+        if (!(last.isDigit() || last == CLOSE_PAREN || last == OP_PERCENT)) return
+        applyExpression(expression + CLOSE_PAREN)
     }
 
     /* ------------------------------ memory ---------------------------- */
@@ -297,9 +352,13 @@ class CalculatorViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(scientific = !_uiState.value.scientific)
     }
 
-    fun onToggleAngle() {
+    /** Flips between degrees and radians. */
+    fun onToggleDegrees() {
         _uiState.value = _uiState.value.copy(degrees = !_uiState.value.degrees)
     }
+
+    /** Kept as an alias so both names keep working for callers. */
+    fun onToggleAngle() = onToggleDegrees()
 
     /** Applies a scientific operation to the value currently on the display. */
     fun onFunction(name: String) {
@@ -380,14 +439,18 @@ class CalculatorViewModel : ViewModel() {
 
     /* ------------------------------ history --------------------------- */
 
+    /** Loads the result of a saved calculation back into the display. */
+    fun onUseHistory(entry: HistoryEntry) {
+        useText(entry.result)
+    }
+
+    /** Loads a saved calculation expression back into the display. */
+    fun onUseHistory(text: String) {
+        useText(text)
+    }
+
     fun onHistorySelected(entry: HistoryEntry) {
-        val current = _uiState.value
-        _uiState.value = current.copy(
-            expression = entry.result,
-            preview = "",
-            hasError = false,
-            showingResult = true
-        )
+        useText(entry.result)
     }
 
     fun onClearHistory() {
@@ -415,6 +478,16 @@ class CalculatorViewModel : ViewModel() {
 
     /** The text the screen should copy to the clipboard. */
     fun copyText(): String = _uiState.value.copyText
+
+    private fun useText(text: String) {
+        if (text.isEmpty()) return
+        _uiState.value = _uiState.value.copy(
+            expression = text,
+            preview = "",
+            hasError = false,
+            showingResult = true
+        )
+    }
 
     private fun applyExpression(expression: String, showingResult: Boolean = false) {
         _uiState.value = _uiState.value.copy(
@@ -450,10 +523,18 @@ class CalculatorViewModel : ViewModel() {
 
     private fun insertValue(value: Double) {
         val current = _uiState.value
-        val base = if (current.showingResult || current.hasError) "" else current.expression
+        val raw = if (current.showingResult || current.hasError) "" else current.expression
+        val base = startFreshFactor(raw)
         val start = trailingNumberStart(base)
         val next = base.substring(0, start) + formatNumber(value)
         applyExpression(next)
+    }
+
+    /** Adds a hidden multiplication when a digit follows ")" or "%". */
+    private fun startFreshFactor(base: String): String {
+        if (base.isEmpty()) return base
+        val last = base[base.length - 1]
+        return if (last == CLOSE_PAREN || last == OP_PERCENT) base + OP_TIMES else base
     }
 
     private fun angleToRadians(value: Double): Double =
@@ -495,17 +576,21 @@ class CalculatorViewModel : ViewModel() {
     private fun previewFor(expression: String): String {
         if (expression.isEmpty()) return ""
         val last = expression[expression.length - 1]
-        if (isBinaryOperator(last) || last == DECIMAL) return ""
+        if (isBinaryOperator(last) || last == DECIMAL || last == OPEN_PAREN) return ""
 
         var hasOperation = false
         var index = 0
         while (index < expression.length) {
             val char = expression[index]
-            if (char == OP_PLUS || char == OP_TIMES || char == OP_DIVIDE || char == OP_PERCENT) {
+            if (char == OP_PLUS || char == OP_TIMES || char == OP_DIVIDE ||
+                char == OP_PERCENT || char == OPEN_PAREN || char == CLOSE_PAREN
+            ) {
                 hasOperation = true
                 break
             }
-            if (char == OP_MINUS && index > 0 && isBinaryOperator(expression[index - 1])) {
+            if (char == OP_MINUS && index > 0 &&
+                (isBinaryOperator(expression[index - 1]) || expression[index - 1] == OPEN_PAREN)
+            ) {
                 hasOperation = true
                 break
             }
@@ -527,6 +612,8 @@ class CalculatorViewModel : ViewModel() {
 private sealed class Token {
     class Number(val value: Double) : Token()
     class Operator(val symbol: Char) : Token()
+    class Open : Token()
+    class Close : Token()
 }
 
 internal object ExpressionEvaluator {
@@ -562,6 +649,12 @@ internal object ExpressionEvaluator {
                 }
                 val number = source.substring(start, index).toDoubleOrNull() ?: return null
                 tokens.add(Token.Number(number))
+            } else if (char == OPEN_PAREN) {
+                tokens.add(Token.Open())
+                index++
+            } else if (char == CLOSE_PAREN) {
+                tokens.add(Token.Close())
+                index++
             } else if (isBinaryOperator(char)) {
                 tokens.add(Token.Operator(char))
                 index++
@@ -613,7 +706,7 @@ internal object ExpressionEvaluator {
             }
         }
 
-        /** term := unary (('×' | '÷') unary)* */
+        /** term := unary (('×' | '÷') unary | implicit unary)* */
         private fun term(): Double? {
             var left = unary() ?: return null
             while (true) {
@@ -623,6 +716,9 @@ internal object ExpressionEvaluator {
                     val right = unary() ?: return null
                     if (token.symbol == OP_DIVIDE && right == 0.0) return null
                     left = if (token.symbol == OP_TIMES) left * right else left / right
+                } else if (token is Token.Open || token is Token.Number) {
+                    val right = unary() ?: return left
+                    left *= right
                 } else {
                     return left
                 }
@@ -640,12 +736,9 @@ internal object ExpressionEvaluator {
             return postfix()
         }
 
-        /** postfix := number '%'* */
+        /** postfix := primary '%'* */
         private fun postfix(): Double? {
-            val token = peek()
-            if (token !is Token.Number) return null
-            position++
-            var value = token.value
+            var value = primary() ?: return null
             while (true) {
                 val next = peek()
                 if (next is Token.Operator && next.symbol == OP_PERCENT) {
@@ -655,6 +748,24 @@ internal object ExpressionEvaluator {
                     return value
                 }
             }
+        }
+
+        /** primary := number | '(' expression ')' */
+        private fun primary(): Double? {
+            val token = peek()
+            if (token is Token.Number) {
+                position++
+                return token.value
+            }
+            if (token is Token.Open) {
+                position++
+                val value = expression() ?: return null
+                val close = peek()
+                if (close !is Token.Close) return null
+                position++
+                return value
+            }
+            return null
         }
     }
 }
