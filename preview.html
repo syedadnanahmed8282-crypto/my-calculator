@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculator</title>
+<style>
+  :root{
+    --forest:#1B5E20;
+    --forest-deep:#0E3D13;
+    --forest-soft:#E4F1E5;
+    --key:#F4F7F4;
+    --key-alt:#EAEFEA;
+    --text:#16211A;
+    --muted:#6B756D;
+    --error:#B3261E;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:#FFFFFF;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+  .phone{
+    width:260px;height:500px;background:#FFFFFF;
+    display:flex;flex-direction:column;
+    padding:14px 12px 12px;gap:10px;overflow:hidden;
+  }
+
+  /* ------------------------------ header ------------------------------ */
+  .header{display:flex;align-items:center;gap:8px;padding:0 4px;flex:0 0 auto;}
+  .header span{color:var(--forest);font-size:13px;font-weight:600;letter-spacing:.2px;}
+  .header i{display:block;width:20px;height:5px;border-radius:3px;background:var(--forest-soft);}
+
+  /* ------------------------------ display ----------------------------- */
+  .display{
+    flex:1 1 auto;min-height:0;
+    display:flex;flex-direction:column;justify-content:flex-end;
+    padding:0 6px 4px;
+  }
+  .secondary{
+    min-height:16px;font-size:13px;line-height:16px;letter-spacing:.2px;
+    color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .secondary.error{color:var(--error);}
+  .primary{
+    font-size:40px;font-weight:300;line-height:1.14;letter-spacing:-1px;
+    text-align:right;color:var(--text);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    transition:font-size .1s ease-out;
+  }
+
+  /* ------------------------------ keypad ------------------------------ */
+  .keypad{
+    flex:0 0 292px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    grid-template-rows:repeat(5,1fr);
+    gap:8px;
+    min-height:0;
+  }
+  .key{
+    border:0;margin:0;padding:0;min-width:0;
+    border-radius:18px;
+    background:var(--key);color:var(--text);
+    font-family:inherit;font-size:21px;font-weight:400;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .12s ease, transform .08s ease;
+    user-select:none;
+  }
+  .key:active{transform:scale(.96);background:#E7EDE7;}
+
+  .key.fn{background:var(--key-alt);color:var(--forest-deep);font-size:18px;font-weight:500;}
+  .key.fn:active{background:#DCE4DC;}
+
+  .key.op{background:var(--forest-soft);color:var(--forest);font-size:23px;font-weight:600;}
+  .key.op:active{background:#D2E7D4;}
+
+  .key.eq{background:var(--forest);color:#FFFFFF;font-size:24px;font-weight:600;}
+  .key.eq:active{background:var(--forest-deep);}
+
+  .key.zero{grid-column:span 2;justify-content:center;font-size:21px;}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="header"><span>Calculator</span><i></i></div>
+
+    <div class="display">
+      <div class="secondary" id="secondary"></div>
+      <div class="primary" id="primary">0</div>
+    </div>
+
+    <div class="keypad">
+      <button class="key fn" data-action="clear">AC</button>
+      <button class="key fn" data-action="sign">&#177;</button>
+      <button class="key fn" data-action="percent">%</button>
+      <button class="key op" data-action="op" data-value="&#247;">&#247;</button>
+
+      <button class="key" data-action="digit" data-value="7">7</button>
+      <button class="key" data-action="digit" data-value="8">8</button>
+      <button class="key" data-action="digit" data-value="9">9</button>
+      <button class="key op" data-action="op" data-value="&#215;">&#215;</button>
+
+      <button class="key" data-action="digit" data-value="4">4</button>
+      <button class="key" data-action="digit" data-value="5">5</button>
+      <button class="key" data-action="digit" data-value="6">6</button>
+      <button class="key op" data-action="op" data-value="&#8722;">&#8722;</button>
+
+      <button class="key" data-action="digit" data-value="1">1</button>
+      <button class="key" data-action="digit" data-value="2">2</button>
+      <button class="key" data-action="digit" data-value="3">3</button>
+      <button class="key op" data-action="op" data-value="+">+</button>
+
+      <button class="key zero" data-action="digit" data-value="0">0</button>
+      <button class="key" data-action="decimal">.</button>
+      <button class="key eq" data-action="equals">=</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var OP_PLUS = "+";
+  var OP_MINUS = "\u2212";   // −
+  var OP_TIMES = "\u00D7";   // ×
+  var OP_DIVIDE = "\u00F7";  // ÷
+  var PERCENT = "%";
+  var DECIMAL = ".";
+  var MAX_DIGITS = 15;
+
+  var state = { expr: "", error: false, result: false };
+
+  var primaryEl = document.getElementById("primary");
+  var secondaryEl = document.getElementById("secondary");
+
+  /* ------------------------- helpers ------------------------- */
+
+  function isBin(c) {
+    return c === OP_PLUS || c === OP_MINUS || c === OP_TIMES || c === OP_DIVIDE;
+  }
+
+  function isDigit(c) {
+    return c >= "0" && c <= "9";
+  }
+
+  function trailingNumberStart(s) {
+    var i = s.length;
+    while (i > 0 && (isDigit(s.charAt(i - 1)) || s.charAt(i - 1) === DECIMAL)) i--;
+    return i;
+  }
+
+  function formatNumber(v) {
+    if (!isFinite(v)) return null;
+    if (v === 0) return "0";
+    var abs = Math.abs(v);
+    if (abs >= 1e12 || abs < 1e-9) {
+      var e = v.toExponential(6);
+      return e.replace(/\.?0+e/, "e");
+    }
+    var rounded = Number(v.toPrecision(12));
+    var s = String(rounded);
+    if (s.indexOf("e") >= 0) return s;
+    return s;
+  }
+
+  /* ---------------------- tiny evaluator --------------------- */
+
+  function tokenize(s) {
+    var tokens = [];
+    var i = 0;
+    while (i < s.length) {
+      var c = s.charAt(i);
+      if (isDigit(c) || c === DECIMAL) {
+        var num = "";
+        while (i < s.length && (isDigit(s.charAt(i)) || s.charAt(i) === DECIMAL)) {
+          num += s.charAt(i);
+          i++;
+        }
+        var v = parseFloat(num);
+        if (isNaN(v)) return null;
+        tokens.push({ type: "num", value: v });
+      } else if (c === PERCENT) {
+        if (!tokens.length || tokens[tokens.length - 1].type !== "num") return null;
+        tokens[tokens.length - 1].value = tokens[tokens.length - 1].value / 100;
+        i++;
+      } else if (c === OP_PLUS || c === OP_MINUS || c === OP_TIMES || c === OP_DIVIDE) {
+        tokens.push({ type: "op", value: c });
+        i++;
+      } else {
+        return null;
+      }
+    }
+    return tokens;
+  }
+
+  function evalTokens(tokens) {
+    var pos = 0;
+
+    function parseExpression() {
+      var left = parseTerm();
+      while (pos < tokens.length && (tokens[pos].value === OP_PLUS || tokens[pos].value === OP_MINUS)) {
+        var op = tokens[pos].value;
+        pos++;
+        var right = parseTerm();
+        left = op === OP_PLUS ? left + right : left - right;
+      }
+      return left;
+    }
+
+    function parseTerm() {
+      var left = parseUnary();
+      while (pos < tokens.length && (tokens[pos].value === OP_TIMES || tokens[pos].value === OP_DIVIDE)) {
+        var op = tokens[pos].value;
+        pos++;
+        var right = parseUnary();
+        if (op === OP_TIMES) {
+          left = left * right;
+        } else {
+          if (right === 0) throw new Error("div0");
+          left = left / right;
+        }
+      }
+      return left;
+    }
+
+    function parseUnary() {
+      if (pos < tokens.length && tokens[pos].type === "op" && tokens[pos].value === OP_MINUS) {
+        pos++;
+        return -parseUnary();
+      }
+      if (pos < tokens.length && tokens[pos].type === "num") {
+        var v = tokens[pos].value;
+        pos++;
+        return v;
+      }
+      throw new Error("bad");
+    }
+
+    var value = parseExpression();
+    if (pos !== tokens.length) throw new Error("bad");
+    return value;
+  }
+
+  function evalExpression(expr) {
+    try {
+      var tokens = tokenize(expr);
+      if (!tokens || !tokens.length) return null;
+      var v = evalTokens(tokens);
+      if (!isFinite(v)) return null;
+      return v;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function trimmedExpression(expr) {
+    var t = expr;
+    while (t.length && isBin(t.charAt(t.length - 1))) t = t.slice(0, -1);
+    if (t === OP_MINUS) t = "";
+    return t;
+  }
+
+  function previewOf(expr) {
+    var t = trimmedExpression(expr);
+    if (!t) return "";
+    var v = evalExpression(t);
+    if (v === null) return "";
+    var txt = formatNumber(v);
+    return txt === null ? "" : txt;
+  }
+
+  /* --------------------------- input -------------------------- */
+
+  function apply(next) {
+    state.expr = next;
+    state.error = false;
+    state.result = false;
+    render();
+  }
+
+  function onDigit(d) {
+    var base = (state.result || state.error) ? "" : state.expr;
+    var start = trailingNumberStart(base);
+    var trailing = base.slice(start);
+    var next;
+
+    if (trailing === "0") {
+      next = base.slice(0, start) + d;
+    } else if ((trailing.match(/\d/g) || []).length >= MAX_DIGITS) {
+      next = base;
+    } else {
+      next = base + d;
+    }
+    apply(next);
+  }
+
+  function onDecimal() {
+    var base = (state.result || state.error) ? "" : state.expr;
+    var start = trailingNumberStart(base);
+    var trailing = base.slice(start);
+    var next;
+
+    if (trailing === "") {
+      next = base + "0" + DECIMAL;
+    } else if (trailing.indexOf(DECIMAL) >= 0) {
+      next = base;
+    } else {
+      next = base + DECIMAL;
+    }
+    apply(next);
+  }
+
+  function onOperator(symbol) {
+    var base = state.error ? "" : state.expr;
+    var next;
+
+    if (base === "" || base === OP_MINUS) {
+      next = symbol === OP_MINUS ? OP_MINUS : "";
+    } else if (isBin(base.charAt(base.length - 1))) {
+      next = base.slice(0, -1) + symbol;
+    } else if (base.charAt(base.length - 1) === DECIMAL) {
+      next = base.slice(0, -1) + symbol;
+    } else {
+      next = base + symbol;
+    }
+    apply(next);
+  }
+
+  function onPercent() {
+    var base = state.error ? "" : state.expr;
+    if (base === "") return;
+    var last = base.charAt(base.length - 1);
+    if (!(isDigit(last) || last === PERCENT)) return;
+    apply(base + PERCENT);
+  }
+
+  function onToggleSign() {
+    if (state.error) return;
+
+    var base = state.result ? "" : state.expr;
+    if (base === "") {
+      apply(OP_MINUS);
+      return;
+    }
+
+    var start = trailingNumberStart(base);
+    var trailing = base.slice(start);
+    if (trailing === "") return; // ends with an operator
+
+    var before = base.charAt(start - 1);
+    var unaryMinus = before === OP_MINUS &&
+      (start - 1 === 0 || isBin(base.charAt(start - 2)));
+
+    if (unaryMinus) {
+      apply(base.slice(0, start - 1) + trailing);
+    } else {
+      apply(base.slice(0, start) + OP_MINUS + trailing);
+    }
+  }
+
+  function onClear() {
+    state.expr = "";
+    state.error = false;
+    state.result = false;
+    render();
+  }
+
+  function onBackspace() {
+    if (state.error) {
+      onClear();
+      return;
+    }
+    var base = state.result ? "" : state.expr;
+    apply(base.slice(0, -1));
+  }
+
+  function onEquals() {
+    var t = trimmedExpression(state.expr);
+    if (!t) return;
+
+    var v = evalExpression(t);
+    if (v === null) {
+      state.expr = "";
+      state.error = true;
+      state.result = false;
+      render();
+      return;
+    }
+
+    var txt = formatNumber(v);
+    if (txt === null) {
+      state.expr = "";
+      state.error = true;
+      state.result = false;
+      render();
+      return;
+    }
+
+    state.expr = txt;
+    state.error = false;
+    state.result = true;
+    render();
+  }
+
+  /* --------------------------- render ------------------------- */
+
+  function fitPrimary(text) {
+    var len = text.length;
+    var size = 40;
+    if (len > 8) size = 34;
+    if (len > 11) size = 28;
+    if (len > 14) size = 23;
+    primaryEl.style.fontSize = size + "px";
+  }
+
+  function render() {
+    var primaryText = state.expr === "" ? "0" : state.expr;
+    primaryEl.textContent = primaryText;
+    fitPrimary(primaryText);
+
+    var secondaryText = state.error
+      ? "Error"
+      : (state.result ? "" : previewOf(state.expr));
+
+    secondaryEl.textContent = secondaryText;
+    if (state.error) {
+      secondaryEl.classList.add("error");
+    } else {
+      secondaryEl.classList.remove("error");
+    }
+  }
+
+  /* --------------------------- events ------------------------- */
+
+  var buttons = document.querySelectorAll(".keypad .key");
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener("click", function () {
+      var action = this.getAttribute("data-action");
+      var value = this.getAttribute("data-value");
+
+      if (action === "digit") {
+        onDigit(value);
+      } else if (action === "decimal") {
+        onDecimal();
+      } else if (action === "op") {
+        onOperator(value);
+      } else if (action === "percent") {
+        onPercent();
+      } else if (action === "sign") {
+        onToggleSign();
+      } else if (action === "clear") {
+        onClear();
+      } else if (action === "equals") {
+        onEquals();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k >= "0" && k <= "9" && k.length === 1) {
+      onDigit(k);
+    } else if (k === "." || k === ",") {
+      onDecimal();
+    } else if (k === "+") {
+      onOperator(OP_PLUS);
+    } else if (k === "-") {
+      onOperator(OP_MINUS);
+    } else if (k === "*" || k === "x") {
+      onOperator(OP_TIMES);
+    } else if (k === "/") {
+      onOperator(OP_DIVIDE);
+    } else if (k === "%") {
+      onPercent();
+    } else if (k === "Enter" || k === "=") {
+      e.preventDefault();
+      onEquals();
+    } else if (k === "Backspace") {
+      e.preventDefault();
+      onBackspace();
+    } else if (k === "Escape" || k === "Delete") {
+      onClear();
+    } else {
+      return;
+    }
+    e.preventDefault();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
