@@ -27,11 +27,10 @@ fun AppIcon(
     cornerFraction: Float = 0.27f,
     label: String? = null,
 ) {
-    val description = label
-    val accessibility = if (description == null) {
+    val accessibility = if (label == null) {
         Modifier
     } else {
-        Modifier.semantics { contentDescription = description }
+        Modifier.semantics { contentDescription = label }
     }
 
     Canvas(modifier = modifier.then(accessibility)) {
@@ -40,12 +39,11 @@ fun AppIcon(
 }
 
 private fun DrawScope.drawAppIcon(cornerFraction: Float) {
-    val size = size.minDimension
-    if (size <= 0f) return
-
     val tileW = size.width
     val tileH = size.height
-    val s = size
+    val s = size.minDimension
+    if (s <= 0f || tileW <= 0f || tileH <= 0f) return
+
     val originX = (tileW - s) / 2f
     val originY = (tileH - s) / 2f
 
@@ -59,7 +57,7 @@ private fun DrawScope.drawAppIcon(cornerFraction: Float) {
     val greenInk = Color(0xFF14553F)
     val shadow = Color(0xFF03150E)
 
-    val cornerRadius = CornerRadius(s * cornerFraction)
+    val corner = CornerRadius(s * cornerFraction.coerceIn(0f, 0.5f))
     val tileSize = Size(s, s)
 
     translate(left = originX, top = originY) {
@@ -70,8 +68,9 @@ private fun DrawScope.drawAppIcon(cornerFraction: Float) {
                 start = Offset(s * 0.05f, 0f),
                 end = Offset(s * 0.95f, s)
             ),
+            topLeft = Offset.Zero,
             size = tileSize,
-            cornerRadius = cornerRadius
+            cornerRadius = corner
         )
 
         // Glossy highlight in the top-left corner.
@@ -81,8 +80,9 @@ private fun DrawScope.drawAppIcon(cornerFraction: Float) {
                 center = Offset(s * 0.26f, s * 0.16f),
                 radius = s * 0.78f
             ),
+            topLeft = Offset.Zero,
             size = tileSize,
-            cornerRadius = cornerRadius
+            cornerRadius = corner
         )
 
         // Corner shade so the tile feels rounded and crafted.
@@ -92,8 +92,9 @@ private fun DrawScope.drawAppIcon(cornerFraction: Float) {
                 start = Offset(s * 0.15f, s * 0.10f),
                 end = Offset(s, s)
             ),
+            topLeft = Offset.Zero,
             size = tileSize,
-            cornerRadius = cornerRadius
+            cornerRadius = corner
         )
 
         // Inner rim highlight along the edge.
