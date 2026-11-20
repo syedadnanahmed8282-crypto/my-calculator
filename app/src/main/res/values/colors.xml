@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary palette (forest green) -->
+    <color name="colorPrimary">#2E7D32</color> <!-- Green 800 -->
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorPrimaryContainer">#A5D6A7</color> <!-- Green 200 -->
+    <color name="colorOnPrimaryContainer">#000000</color>
+
+    <!-- Secondary palette -->
+    <color name="colorSecondary">#558B2F</color> <!-- Green 700 -->
+    <color name="colorOnSecondary">#FFFFFF</color>
+    <color name="colorSecondaryContainer">#C8E6C9</color> <!-- Green 100 -->
+    <color name="colorOnSecondaryContainer">#000000</color>
+
+    <!-- Background & surface -->
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorOnBackground">#000000</color>
+    <color name="colorSurface">#FAFAFA</color>
+    <color name="colorOnSurface">#000000</color>
+
+    <!-- Error -->
+    <color name="colorError">#B00020</color>
+    <color name="colorOnError">#FFFFFF</color>
+
+    <!-- Optional additional colors -->
+    <color name="colorTertiary">#00695C</color> <!-- Teal 800 -->
+    <color name="colorOnTertiary">#FFFFFF</color>
+</resources>

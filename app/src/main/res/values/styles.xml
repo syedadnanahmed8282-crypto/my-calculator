@@ -1,19 +1,16 @@
 <resources>
-    <!-- Theme for Vibecraft app -->
-    <style name="Theme.Vibecraft" parent="Theme.Material3.DayNight">
-        <!-- Primary and accent colors -->
-        <item name="colorPrimary">#2E8B57</item> <!-- Forest Green -->
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorPrimaryContainer">#B5EAD7</item>
-        <item name="colorSecondary">#388E3C</item> <!-- Darker Green -->
-        <item name="colorOnSecondary">#FFFFFF</item>
-        <!-- Background and surface colors -->
-        <item name="colorBackground">#FFFFFF</item>
-        <item name="colorOnBackground">#000000</item>
-        <item name="colorSurface">#FFFFFF</item>
-        <item name="colorOnSurface">#000000</item>
-        <!-- Optional: Remove default action bar -->
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <!-- Base application theme. Uses a platform Material theme so no extra
+         dependency (Material Components / AppCompat) is required. -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">#2E7D32</item>
+        <item name="android:colorPrimaryDark">#1B5E20</item>
+        <item name="android:colorAccent">#388E3C</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <!-- Alias kept so the AndroidManifest can reference either name. -->
+    <style name="Theme.Vibecraft" parent="AppTheme" />
 </resources>
