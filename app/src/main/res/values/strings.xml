@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Launcher name shown under the app icon -->
-    <string name="app_name">Hisab</string>
+    <string name="app_name">হিসাব করো</string>
 </resources>

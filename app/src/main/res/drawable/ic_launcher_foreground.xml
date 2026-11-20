@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Foreground for the adaptive launcher icon.
-    Simple white calculator silhouette matching the app's green‑white theme.
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Calculator body: white rounded square -->
+    <!-- Calculator body: crisp white rounded rectangle inside adaptive safe zone -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M24,24
-            h60
-            a12,12 0 0 1 12,12
-            v36
-            a12,12 0 0 1 -12,12
-            h-60
-            a12,12 0 0 1 -12,-12
-            v-36
-            a12,12 0 0 1 12,-12
-            z" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,26 H70 A8,8 0 0 1 78,34 V74 A8,8 0 0 1 70,82 H38 A8,8 0 0 1 30,74 V34 A8,8 0 0 1 38,26 Z" />
 
-    <!-- Display area (lightly transparent) -->
+    <!-- Display screen: deep forest green -->
     <path
-        android:fillColor="#80FFFFFF"
-        android:pathData="M30,30 h48 v8 h-48 z" />
+        android:fillColor="#1B4332"
+        android:pathData="M38,31 H70 A3,3 0 0 1 73,34 V40 A3,3 0 0 1 70,43 H38 A3,3 0 0 1 35,40 V34 A3,3 0 0 1 38,31 Z" />
 
-    <!-- Button circles -->
+    <!-- Display value indicator -->
     <path
-        android:fillColor="#FFFFFFFF"
+        android:fillColor="#95D5B2"
+        android:pathData="M56.5,35.5 H68.5 A1.5,1.5 0 0 1 70,37 A1.5,1.5 0 0 1 68.5,38.5 H56.5 A1.5,1.5 0 0 1 55,37 A1.5,1.5 0 0 1 56.5,35.5 Z" />
+
+    <!-- Keypad buttons: forest green -->
+    <path
+        android:fillColor="#2D6A4F"
         android:pathData="
-            M38,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M54,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M70,44 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M38,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M54,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M70,58 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M38,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M54,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8
-            M70,72 a4,4 0 0 1 0,8 a4,4 0 0 1 0,-8" />
+            M40,48 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M54,48 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M68,48 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M40,58 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M54,58 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M40,68 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8
+            M54,68 a4,4 0 1,1 0,8 a4,4 0 1,1 0,-8" />
+
+    <!-- Equals pill button -->
+    <path
+        android:fillColor="#1B4332"
+        android:pathData="M68,58 A4,4 0 0 1 72,62 V72 A4,4 0 0 1 68,76 A4,4 0 0 1 64,72 V62 A4,4 0 0 1 68,58 Z" />
+
+    <!-- Equals symbol -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65.8,64.6 H70.2 V66.2 H65.8 Z M65.8,67.8 H70.2 V69.4 H65.8 Z" />
 </vector>
