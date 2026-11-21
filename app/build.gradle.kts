@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.vibecraft.p339fdb58"
+        applicationId = "com.vibecraft.p64daabd6"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

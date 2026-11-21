@@ -1,111 +1,357 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>হিসাব করো</title>
+<meta name="viewport" content="width=260, initial-scale=1">
+<title>Habit Tracker</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;width:100%;overflow:hidden}
-body{font-family:"Noto Sans Bengali",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#fff;color:#0F1A13}
-.app{height:100%;display:flex;flex-direction:column;padding:12px 12px 8px;background:#fff}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.brand{display:flex;align-items:center;gap:6px}
-.dot{width:21px;height:21px;border-radius:7px;background:linear-gradient(140deg,#1E6B3A,#0A2E18);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
-.brand b{font-size:12.5px;letter-spacing:.2px}
-.ghost{border:1px solid #E1EAE2;background:#F7FAF7;color:#14532D;font-size:9.5px;font-weight:700;padding:4px 8px;border-radius:20px;font-family:inherit}
-.ghost:active{background:#E8F3EB}
-.disp{flex:0 0 auto;border-radius:16px;padding:9px 12px 10px;color:#fff;background:linear-gradient(155deg,#1E6B3A,#14532D 55%,#0A2E18);overflow:hidden}
-.expr{font-size:11px;color:#A9C9B4;text-align:right;min-height:15px;white-space:nowrap;overflow:hidden;direction:ltr}
-.res{font-size:29px;font-weight:800;text-align:right;line-height:1.2;letter-spacing:.5px;white-space:nowrap;overflow:hidden;direction:ltr}
-.prev{font-size:9px;color:#8FB79E;text-align:right;min-height:12px;margin-top:2px;white-space:nowrap;overflow:hidden}
-.pad{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(5,1fr);gap:6px;margin-top:8px}
-.k{border:1px solid #E1EAE2;border-radius:12px;background:#F7FAF7;color:#0F1A13;font-size:15px;font-weight:600;font-family:inherit;transition:transform .08s,background .12s}
-.k:active{transform:scale(.94);background:#E8F3EB}
-.fn{background:#EDF3EE;color:#14532D;font-weight:700;font-size:13px}
-.op{background:#E8F3EB;color:#14532D;font-weight:800;font-size:17px;border-color:#D8E8DD}
-.eq{grid-column:span 2;border:none;color:#fff;font-size:19px;font-weight:800;background:linear-gradient(140deg,#1E6B3A,#0A2E18)}
-.hint{font-size:8.5px;color:#6E7B71;text-align:center;margin-top:6px;letter-spacing:.2px}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0}
+  body{
+    background:#E8F5E9;
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:#1A1C1A;
+  }
+  .phone{
+    position:relative;width:260px;height:500px;background:#fff;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 2px}
+  .date{font-size:10.5px;color:#5A615A;letter-spacing:.2px}
+  .title{font-size:20px;font-weight:700;letter-spacing:-.3px;line-height:24px;margin-top:1px}
+  .brand{
+    width:32px;height:32px;border-radius:12px;background:#E8F5E9;
+    display:flex;align-items:center;justify-content:center;font-size:15px;flex:none;
+  }
+
+  /* ---------- progress card ---------- */
+  .card{
+    margin:10px 14px 0;padding:12px 14px;border-radius:18px;
+    background:linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%);
+    display:flex;align-items:center;gap:12px;
+    box-shadow:0 8px 18px rgba(27,94,32,.22);
+  }
+  .ring{position:relative;width:56px;height:56px;flex:none}
+  .ringLabel{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:12px;font-weight:700;letter-spacing:-.2px;
+  }
+  .cardText{flex:1;min-width:0}
+  .cardTitle{color:#fff;font-size:13.5px;font-weight:700;line-height:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cardSub{color:rgba(255,255,255,.76);font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill{
+    display:inline-flex;align-items:center;gap:3px;margin-top:6px;
+    background:rgba(255,255,255,.16);color:#EAF7EA;
+    font-size:9.5px;font-weight:600;padding:3px 7px;border-radius:999px;
+  }
+
+  /* ---------- section label ---------- */
+  .sectionLabel{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
+  .sectionLabel .lab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#5A615A}
+  .sectionLabel .count{font-size:10.5px;font-weight:700;color:#2E7D32}
+
+  /* ---------- list ---------- */
+  .list{
+    flex:1;overflow-y:auto;padding:0 14px 72px;
+    display:flex;flex-direction:column;gap:8px;
+    scrollbar-width:none;
+  }
+  .list::-webkit-scrollbar{width:0;height:0}
+
+  .row{
+    display:flex;align-items:center;gap:9px;padding:9px 10px;cursor:pointer;
+    border:1px solid #E1E7E1;border-radius:16px;background:#fff;
+    transition:background .16s ease,border-color .16s ease,transform .1s ease;
+  }
+  .row:active{transform:scale(.985)}
+  .row.done{background:#F4FBF4;border-color:#C8E6C9}
+
+  .emoji{
+    width:30px;height:30px;border-radius:10px;background:#E8F5E9;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:15px;
+    transition:background .16s ease;
+  }
+  .row.done .emoji{background:#C8E6C9}
+
+  .rowText{flex:1;min-width:0}
+  .rowName{
+    font-size:12.5px;font-weight:600;line-height:15px;letter-spacing:-.1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .row.done .rowName{color:#2E7D32}
+  .rowSub{
+    font-size:10px;color:#5A615A;margin-top:2px;line-height:12px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .row.done .rowSub{color:#4CAF50}
+
+  .check{
+    width:24px;height:24px;border-radius:50%;flex:none;
+    border:1.5px solid #BFC9BF;background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:transparent;line-height:1;
+    transition:background .16s ease,border-color .16s ease,color .16s ease;
+  }
+  .row.done .check{background:#1B5E20;border-color:#1B5E20;color:#fff}
+
+  .hint{
+    text-align:center;font-size:9.5px;color:#9BAA9B;padding:6px 0 2px;
+    letter-spacing:.2px;
+  }
+
+  /* ---------- fab ---------- */
+  .fab{
+    position:absolute;right:14px;bottom:16px;
+    width:48px;height:48px;border-radius:16px;background:#1B5E20;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:300;line-height:1;padding-bottom:2px;
+    box-shadow:0 8px 18px rgba(27,94,32,.32);cursor:pointer;
+    transition:transform .12s ease,background .12s ease;z-index:4;
+  }
+  .fab:active{transform:scale(.93);background:#2E7D32}
+
+  /* ---------- dialog ---------- */
+  .scrim{
+    position:absolute;inset:0;z-index:6;padding:20px;
+    background:rgba(0,0,0,.34);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .18s ease;
+  }
+  .scrim.show{opacity:1;pointer-events:auto}
+  .dialog{
+    width:100%;background:#fff;border-radius:22px;padding:16px;
+    box-shadow:0 14px 34px rgba(0,0,0,.26);
+    transform:translateY(8px) scale(.97);
+    transition:transform .2s cubic-bezier(.2,.8,.3,1);
+  }
+  .scrim.show .dialog{transform:none}
+  .dTitle{font-size:14px;font-weight:700;line-height:18px}
+  .dBody{font-size:10.5px;color:#5A615A;margin-top:2px;margin-bottom:10px}
+  .dInput{
+    width:100%;border:1px solid #BFC9BF;border-radius:10px;
+    padding:8px 10px;font-size:12px;color:#1A1C1A;outline:none;
+    font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s;
+  }
+  .dInput::placeholder{color:#9BAA9B}
+  .dInput:focus{border-color:#1B5E20;box-shadow:0 0 0 3px rgba(27,94,32,.12)}
+  .emojiPick{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}
+  .ep{
+    width:26px;height:26px;border-radius:9px;border:1px solid #E1E7E1;background:#F7FAF7;
+    font-size:13px;line-height:1;padding:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .14s,border-color .14s;
+  }
+  .ep.sel{background:#E8F5E9;border-color:#1B5E20}
+  .dRow{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:12px}
+  .dBtn{font-size:11.5px;font-weight:600;padding:7px 12px;border-radius:10px;cursor:pointer;border:none;font-family:inherit}
+  .cancel{background:transparent;color:#2E7D32}
+  .cancel:active{background:#F1F7F1}
+  .addBtn{background:#1B5E20;color:#fff}
+  .addBtn:active{background:#2E7D32}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="top">
-    <div class="brand"><div class="dot">=</div><b>হিসাব করো</b></div>
-    <button class="ghost" onclick="hist()">🕘 ইতিহাস</button>
+<div class="phone">
+
+  <div class="topbar">
+    <div>
+      <div class="date" id="todayLabel">Thu, 12 Jun</div>
+      <div class="title">My Habits</div>
+    </div>
+    <div class="brand">🌿</div>
   </div>
-  <div class="disp">
-    <div class="expr" id="expr"></div>
-    <div class="res" id="res">0</div>
-    <div class="prev" id="prev"></div>
+
+  <div class="card">
+    <div class="ring">
+      <svg viewBox="0 0 56 56" width="56" height="56" aria-hidden="true">
+        <circle cx="28" cy="28" r="23" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="5.5"/>
+        <circle id="ringArc" cx="28" cy="28" r="23" fill="none" stroke="#8FD694"
+                stroke-width="5.5" stroke-linecap="round"
+                transform="rotate(-90 28 28)" stroke-dasharray="144.5" stroke-dashoffset="48.2"/>
+      </svg>
+      <div class="ringLabel" id="ringPct">67%</div>
+    </div>
+    <div class="cardText">
+      <div class="cardTitle" id="cardTitle">2 of 3 done</div>
+      <div class="cardSub" id="cardSub">Keep the streak alive</div>
+      <div class="pill">🔥 <span id="bestStreak">12</span> day streak</div>
+    </div>
   </div>
-  <div class="pad" id="pad"></div>
-  <div class="hint">বাংলা সংখ্যা • শতাংশ • ইতিহাস</div>
+
+  <div class="sectionLabel">
+    <div class="lab">Today</div>
+    <div class="count" id="doneCount">2/3</div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="fab" id="fab">+</div>
+
+  <div class="scrim" id="scrim">
+    <div class="dialog">
+      <div class="dTitle">New habit</div>
+      <div class="dBody">What would you like to grow?</div>
+      <input class="dInput" id="habitName" placeholder="e.g. Stretch for 5 min" maxlength="26" autocomplete="off">
+      <div class="emojiPick" id="emojiPick"></div>
+      <div class="dRow">
+        <button class="dBtn cancel" id="cancelBtn" type="button">Cancel</button>
+        <button class="dBtn addBtn" id="confirmBtn" type="button">Add</button>
+      </div>
+    </div>
+  </div>
+
 </div>
+
 <script>
-var BN='০১২৩৪৫৬৭৮৯';
-function bn(s){return String(s).replace(/[0-9]/g,function(d){return BN[+d]});}
-var keys=[['AC','fn'],['⌫','fn'],['%','fn'],['÷','op'],
-          ['7',''],['8',''],['9',''],['×','op'],
-          ['4',''],['5',''],['6',''],['−','op'],
-          ['1',''],['2',''],['3',''],['+','op'],
-          ['0',''],['.',''],['=','eq']];
-var pad=document.getElementById('pad');
-keys.forEach(function(k){
-  var b=document.createElement('button');
-  b.className='k '+k[1];
-  b.textContent=k[0];
-  b.onclick=function(){press(k[0]);};
-  pad.appendChild(b);
-});
-var expr='123×45';
-var last='১২৩ + ৪৫ = ১৬৮';
-var resEl=document.getElementById('res'),exprEl=document.getElementById('expr'),prevEl=document.getElementById('prev');
-function toMath(s){return s.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');}
-function compute(s){
-  if(!s)return '';
-  var t=toMath(s).replace(/%/g,'/100');
-  if(!/^[0-9+\-*/. ]+$/.test(t))return '';
-  try{var v=Function('"use strict";return ('+t+')')();
-    if(!isFinite(v))return '';
-    return String(Math.round(v*1e10)/1e10);
-  }catch(e){return '';}
-}
-function render(){
-  var r=compute(expr);
-  exprEl.textContent=expr?bn(expr):'';
-  resEl.textContent=bn(r!==''?r:(expr||'0'));
-  prevEl.textContent=last?'আগের: '+last:'';
-}
-function press(k){
-  var ops='+−×÷';
-  if(k==='AC'){expr='';}
-  else if(k==='⌫'){expr=expr.slice(0,-1);}
-  else if(k==='='){
-    var r=compute(expr);
-    if(r!==''){last=bn(expr)+' = '+bn(r);expr=r;}
+(function () {
+  var habits = [
+    { id: 1, emoji: '🧘', name: 'Meditate',      target: 1, count: 1, streak: 12 },
+    { id: 2, emoji: '💧', name: 'Drink water',   target: 8, count: 6, streak: 5  },
+    { id: 3, emoji: '📖', name: 'Read 20 pages', target: 1, count: 1, streak: 4  }
+  ];
+  var nextId = 4;
+  var EMOJIS = ['🌿', '💧', '🧘', '📖', '🏃', '😴'];
+  var pickedEmoji = '🌿';
+
+  var listEl    = document.getElementById('list');
+  var scrim     = document.getElementById('scrim');
+  var nameInput = document.getElementById('habitName');
+  var arc       = document.getElementById('ringArc');
+  var ringPct   = document.getElementById('ringPct');
+  var cardTitle = document.getElementById('cardTitle');
+  var cardSub   = document.getElementById('cardSub');
+  var bestEl    = document.getElementById('bestStreak');
+  var countEl   = document.getElementById('doneCount');
+  var pickEl    = document.getElementById('emojiPick');
+  var CIRC      = 2 * Math.PI * 23;
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
   }
-  else if(ops.indexOf(k)>=0){
-    if(expr===''&&k!=='−')return;
-    if(ops.indexOf(expr.slice(-1))>=0)expr=expr.slice(0,-1);
-    expr+=k;
+
+  function render() {
+    var html = '';
+    for (var i = 0; i < habits.length; i++) {
+      var h = habits[i];
+      var done = h.count >= h.target;
+      var sub;
+      if (done) {
+        sub = h.streak > 0 ? '🔥 ' + h.streak + ' day streak' : 'Done today';
+      } else {
+        sub = h.target > 1 ? h.count + ' of ' + h.target + ' today' : 'Not done yet';
+      }
+      html +=
+        '<div class="row' + (done ? ' done' : '') + '" data-id="' + h.id + '">' +
+          '<div class="emoji">' + h.emoji + '</div>' +
+          '<div class="rowText">' +
+            '<div class="rowName">' + esc(h.name) + '</div>' +
+            '<div class="rowSub">' + sub + '</div>' +
+          '</div>' +
+          '<div class="check">✓</div>' +
+        '</div>';
+    }
+    html += '<div class="hint">Tap a habit to check it off 🌿</div>';
+    listEl.innerHTML = html;
+
+    var doneCount = 0, best = 0;
+    for (var j = 0; j < habits.length; j++) {
+      if (habits[j].count >= habits[j].target) doneCount++;
+      if (habits[j].streak > best) best = habits[j].streak;
+    }
+    var total = habits.length;
+    var frac = total ? doneCount / total : 0;
+
+    arc.setAttribute('stroke-dasharray', CIRC.toFixed(1));
+    arc.setAttribute('stroke-dashoffset', (CIRC * (1 - frac)).toFixed(1));
+    ringPct.textContent = Math.round(frac * 100) + '%';
+    countEl.textContent = doneCount + '/' + total;
+    bestEl.textContent = best;
+
+    if (total > 0 && doneCount === total) {
+      cardTitle.textContent = 'All done today 🎉';
+      cardSub.textContent = 'Perfect day — nice work';
+    } else {
+      cardTitle.textContent = doneCount + ' of ' + total + ' done';
+      cardSub.textContent = 'Keep the streak alive';
+    }
   }
-  else if(k==='.'){
-    var tail=expr.split(/[+−×÷]/).pop();
-    if(tail.indexOf('.')>=0)return;
-    expr+=k;
+
+  // check a habit off / clear it
+  listEl.addEventListener('click', function (e) {
+    var row = e.target.closest ? e.target.closest('.row') : null;
+    if (!row) return;
+    var id = Number(row.getAttribute('data-id'));
+    for (var i = 0; i < habits.length; i++) {
+      if (habits[i].id === id) {
+        var h = habits[i];
+        h.count = h.count >= h.target ? 0 : h.target;
+        break;
+      }
+    }
+    render();
+  });
+
+  // emoji picker
+  (function () {
+    var out = '';
+    for (var i = 0; i < EMOJIS.length; i++) {
+      out += '<button class="ep' + (i === 0 ? ' sel' : '') + '" data-e="' + EMOJIS[i] + '" type="button">' +
+             EMOJIS[i] + '</button>';
+    }
+    pickEl.innerHTML = out;
+  })();
+
+  pickEl.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.ep') : null;
+    if (!b) return;
+    pickedEmoji = b.getAttribute('data-e');
+    var kids = pickEl.children;
+    for (var i = 0; i < kids.length; i++) {
+      kids[i].className = kids[i] === b ? 'ep sel' : 'ep';
+    }
+  });
+
+  function openDialog() {
+    scrim.classList.add('show');
+    setTimeout(function () { nameInput.focus(); }, 140);
   }
-  else if(k==='%'){
-    if(expr&&ops.indexOf(expr.slice(-1))<0)expr+='%';
+  function closeDialog() {
+    scrim.classList.remove('show');
+    nameInput.value = '';
   }
-  else{expr+=k;}
+
+  document.getElementById('fab').addEventListener('click', openDialog);
+  document.getElementById('cancelBtn').addEventListener('click', closeDialog);
+  scrim.addEventListener('click', function (e) { if (e.target === scrim) closeDialog(); });
+
+  function addHabit() {
+    var name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    habits.push({
+      id: nextId++,
+      emoji: pickedEmoji,
+      name: name,
+      target: 1,
+      count: 0,
+      streak: 0
+    });
+    closeDialog();
+    render();
+    listEl.scrollTop = listEl.scrollHeight;
+  }
+
+  document.getElementById('confirmBtn').addEventListener('click', addHabit);
+  nameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addHabit();
+  });
+
   render();
-}
-function hist(){
-  last=last||'কোনো হিসাব নেই';
-  prevEl.textContent=last;
-}
-render();
+})();
 </script>
 </body>
 </html>

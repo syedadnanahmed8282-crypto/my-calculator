@@ -18,9 +18,9 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
       - name: Name the APK
-        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/app.apk
+        run: mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Habit-tracker.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-apk
-          path: app/build/outputs/apk/debug/app.apk
+          name: Habit-tracker-apk
+          path: app/build/outputs/apk/debug/Habit-tracker.apk
