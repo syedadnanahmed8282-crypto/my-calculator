@@ -70,7 +70,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
  */
 @Composable
 fun AppRoot() {
-    HabitTheme {
+    VibecraftTheme {
         val vm: HabitViewModel = viewModel()
         val state by vm.state.collectAsState()
         var showAddDialog by remember { mutableStateOf(false) }
